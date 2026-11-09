@@ -1,0 +1,98 @@
+# The one place a version is written. Cloned from mytube-app's catalog
+# (/Volumes/Data2/mytube-app/gradle/libs.versions.toml): same set, same reasons.
+#
+# ## Read this before changing any number here
+#
+# These versions are not "the latest of everything". They are the one set that
+# actually resolves, found by hitting five walls in a row, and four of them are
+# deliberately older than what is published. The constraints, in the order they
+# bite:
+#
+#   1. AGP 9.x cannot be used at all.
+#      "The 'com.android.application' plugin is not compatible with the
+#      'org.jetbrains.kotlin.multiplatform' plugin since AGP 9.0." AGP 9 wants
+#      the separate com.android.kotlin.multiplatform.library plugin instead.
+#      So AGP is 8.x, and everything downstream follows from that.
+#
+#   2. Compose Multiplatform 1.12.0 is therefore unusable.
+#      Its Android artifacts declare "requires Android Gradle plugin 9.1.0 or
+#      higher". 1.11.0 does not, and is otherwise the same generation.
+#
+#   3. Kotlin is pinned by Compose, not chosen.
+#      CMP 1.11.0's klibs are built with Kotlin 2.3.20 (compiler_version read
+#      from the manifest inside the artifact). An older Kotlin cannot read them
+#      and says so as "KLIB resolver: Could not find <a file that is plainly
+#      there>" — a missing-file message for a version mismatch. That one cost
+#      three wrong turns: the external volume, the configuration cache, and
+#      filesystem case sensitivity were all investigated before the manifest was
+#      read. Read the manifest first next time.
+#
+#   4. Gradle 8.14 is the ceiling of Kotlin 2.3.20's tested range, and AGP 8.11.1
+#      refuses anything below 8.13. The window is 8.13-8.14.
+#
+#   5. Any androidx artifact of the newest generation demands AGP 9.1 too.
+#      lifecycle 2.11.0 does, exactly as Compose 1.12.0 does, and for the same
+#      reason. This is now a rule rather than an incident: before adding an
+#      androidx dependency, take the version *below* the newest, or expect
+#      "requires Android Gradle plugin 9.1.0 or higher" and one more downgrade.
+#
+#   6. Ktor must be 3.3+ for minSdk below 30.
+#      3.2.0 fails to dex: "Space characters in SimpleName 'use streaming syntax'
+#      are not allowed prior to DEX version 040", and DEX 040 means minSdk 30.
+#      3.5.2 dexes cleanly at minSdk 26, which keeps Android 8 devices.
+#
+# Two of the repositories lie about what is newest. Maven Central's search API
+# returned stale answers for Kotlin, Compose and Ktor alike — always confirm with
+# maven-metadata.xml or a direct HEAD on the version directory.
+
+[versions]
+kotlin = "2.3.20"
+compose = "1.11.0"
+agp = "8.11.1"
+
+ktor = "3.5.2"
+serialization = "1.9.0"
+coroutines = "1.10.2"
+
+androidMinSdk = "26"
+androidCompileSdk = "36"
+androidTargetSdk = "36"
+
+androidxActivity = "1.13.0"
+# 2.10.0, not 2.11.0: see constraint 5 above.
+lifecycle = "2.10.0"
+# Album covers. Coil 3 is the multiplatform line.
+coil = "3.4.0"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version = "1.15.0" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+
+ktor-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# JetBrains' multiplatform build of AndroidX lifecycle (the `org.jetbrains.`
+# prefix matters: `androidx.lifecycle` is Android only).
+lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+
+# The multiplatform back handler (system back on Android, the edge swipe on iOS). Pinned to the Compose version.
+compose-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "compose" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+# Coil brings no networking of its own; it uses the Ktor client already here.
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+
+[plugins]
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }

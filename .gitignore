@@ -1,0 +1,28 @@
+build/
+*/build/
+.gradle/
+local.properties
+.kotlin/
+
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+.DS_Store
+dist/
+hs_err_pid*.log
+replay_pid*.log
+
+# Source, whatever a global ignore says: a `model` line in a developer's
+# ~/.gitignore_global once kept domain/model out of every commit in mytube-app.
+!composeApp/src/commonMain/kotlin/com/r1control/app/domain/model/
+!composeApp/src/commonMain/kotlin/com/r1control/app/domain/model/**
+
+# The household's phone UDIDs.
+ios-devices
+
+# The release key's passwords (the key itself lives on Data2).
+keystore.properties
+
+# QA screenshots: 58 MB of the household's screens, chat included. The reports stay.
+docs/qa/screens/

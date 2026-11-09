@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The R1 speaks plain HTTP on the house wifi and has a DHCP address, so the
+     host cannot be named here. Cleartext is allowed for every host, which is
+     the same trade mytube-app makes with android:usesCleartextTraffic. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

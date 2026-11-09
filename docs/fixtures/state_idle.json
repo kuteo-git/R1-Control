@@ -1,0 +1,55 @@
+{
+ "volume": 100,
+ "volume_steps": 15,
+ "eq_enabled": true,
+ "eq_bands": [
+  1000,
+  0,
+  -600,
+  0,
+  800
+ ],
+ "eq": {
+  "freqs": [
+   60,
+   230,
+   910,
+   3600,
+   14000
+  ],
+  "min": -1500,
+  "max": 1500
+ },
+ "loudness_mb": 1000,
+ "voice_state": "IDLE",
+ "voice_awake": false,
+ "chat": [],
+ "news_enabled": false,
+ "news_time": "09:15",
+ "news_voice": "Thiền Tâm Đức",
+ "news_categories": [
+  {
+   "key": "tech",
+   "enabled": true
+  },
+  {
+   "key": "world",
+   "enabled": true
+  },
+  {
+   "key": "society",
+   "enabled": false
+  },
+  {
+   "key": "weather",
+   "enabled": false
+  },
+  {
+   "key": "power",
+   "enabled": true
+  }
+ ],
+ "tts_host": "http://10.25.113.151:8002",
+ "ota_url": "http://10.25.113.151:8003/xiaozhi/ota",
+ "ws_url": "ws://10.25.113.151:8000/xiaozhi/v1/"
+}

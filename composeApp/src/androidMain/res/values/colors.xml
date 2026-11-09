@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window's own colour before Compose draws; the same value as the
+         theme's ground. -->
+    <color name="r1_bg">#141416</color>
+    <color name="ic_launcher_background">#141416</color>
+</resources>
