@@ -94,10 +94,10 @@ android {
         applicationId = "com.r1control.app"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        // One number per release in four places: versionName, versionCode,
-        // CFBundleShortVersionString, CFBundleVersion.
-        versionCode = 2
-        versionName = "0.1.0"
+        // One number per release in five places: versionName, versionCode,
+        // CFBundleShortVersionString, CFBundleVersion, APP_VERSION (VersionGuardTest).
+        versionCode = 3
+        versionName = "0.1.1"
     }
 
     signingConfigs {

@@ -73,8 +73,9 @@ Read `gradle/libs.versions.toml` before changing anything: it is mytube-app's
 set (Kotlin 2.3.20 pinned by Compose 1.11.0, AGP 8.11.1, Gradle 8.14, Ktor
 3.5.2, lifecycle 2.10.0) with its reasons. AGP 9.x and anything "newest
 generation" from androidx demand AGP 9.1 and fail; take the version below.
-One release number lives in four places: `versionName`, `versionCode`,
-`CFBundleShortVersionString`, `CFBundleVersion`.
+One release number lives in five places: `versionName`, `versionCode`,
+`CFBundleShortVersionString`, `CFBundleVersion`, and `APP_VERSION`, which
+Settings shows (`VersionGuardTest`).
 
 ## 5. Language
 
