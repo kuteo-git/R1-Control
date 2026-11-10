@@ -65,7 +65,7 @@ Pinned versions: Kotlin 2.3.20, Compose Multiplatform 1.11.0, AGP 8.11.1 and Kto
 - **One shared reading of the speaker** (`SpeakerFeed`), polled only while the app is on screen. Every screen draws from it.
 - **One owner for every song list** (`MusicStore`). The playing list is a pointer into it, never a copy, and there is one Next, guarded by `OneNextGuardTest`.
 - **Every word on screen** goes through a `Strings` interface. A missing translation does not compile.
-- 475 tests, including real-pointer drag tests rendered with `ImageComposeScene`.
+- 495 tests, including real-pointer drag tests rendered with `ImageComposeScene`.
 
 `CLAUDE.md` is the project charter, and `docs/spec.md` is the product spec.
 
