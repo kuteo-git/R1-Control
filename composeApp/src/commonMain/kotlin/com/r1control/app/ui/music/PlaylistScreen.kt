@@ -138,7 +138,7 @@ private fun Header(title: String, state: PlaylistPageState.Showing, strings: Str
         if (problem is Problem.Failed) ProblemBanner(strings.describe(problem.error))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.Large)) {
             Cover(state.songs.tracks.firstOrNull()?.thumbnailUrl.orEmpty(), 96.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.Hair)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
                 Text(title, style = MaterialTheme.typography.headlineSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
                     strings.songCount(state.songs.size),

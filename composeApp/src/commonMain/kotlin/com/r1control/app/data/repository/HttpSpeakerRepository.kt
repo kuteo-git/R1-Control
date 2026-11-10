@@ -63,6 +63,7 @@ class HttpSpeakerRepository(
                 media = media.await().toDomain(),
                 bluetooth = bluetooth.await().toDomain(),
                 voiceControls = s.toVoiceControls(),
+                settings = s.toSettings(),
             )
         }
     }

@@ -7,7 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -50,26 +54,49 @@ fun VoiceScreen(viewModel: VoiceViewModel) {
 @Composable
 fun VoiceContent(state: VoiceState, onChoose: (String) -> Unit, onRetry: () -> Unit) {
     val strings = LocalStrings.current
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = Space.XLarge)) {
+    Column(Modifier.fillMaxSize()) {
         val problem = state.problem
         if (problem is Problem.Failed) {
             ProblemBanner(strings.describe(problem.error), Modifier.padding(horizontal = Space.Gutter, vertical = Space.Small))
         }
-        LoadableContent(state.content, onRetry) { content ->
-            when (content) {
-                VoiceList.NoServer -> Text(
-                    strings.voiceNoServer,
-                    modifier = Modifier.padding(Space.Gutter),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                is VoiceList.Voices -> {
-                    SectionLabel(strings.voiceAll, Modifier.padding(horizontal = Space.Gutter))
-                    content.voices.available.forEach { name ->
-                        VoiceRow(name, selected = name == content.voices.current, onClick = { onChoose(name) })
+        val content = (state.content as? Loadable.Loaded)?.value
+        if (content is VoiceList.Voices) {
+            VoiceList(content.voices, onChoose, Modifier.weight(1f))
+        } else {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = Space.XLarge)) {
+                LoadableContent(state.content, onRetry) { loaded ->
+                    if (loaded == VoiceList.NoServer) {
+                        Text(
+                            strings.voiceNoServer,
+                            modifier = Modifier.padding(Space.Gutter),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+/** Rows above the chosen voice when the page opens: it lands in the upper middle, not under the top edge. */
+private const val ROWS_ABOVE_CHOSEN = 4
+
+/**
+ * The voices, opened on the chosen one. The list state is made with its first
+ * item, so the very first frame is already scrolled; choosing another voice
+ * does not move the list, as the person is looking at it.
+ */
+@Composable
+private fun VoiceList(voices: TtsVoices, onChoose: (String) -> Unit, modifier: Modifier) {
+    val strings = LocalStrings.current
+    // Item 0 is the label, and voice n is item n + 1.
+    val chosen = voices.available.indexOf(voices.current)
+    val list = rememberLazyListState(initialFirstVisibleItemIndex = if (chosen < 0) 0 else (chosen + 1 - ROWS_ABOVE_CHOSEN).coerceAtLeast(0))
+    LazyColumn(state = list, modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Space.XLarge)) {
+        item(key = "label") { SectionLabel(strings.voiceAll, Modifier.padding(horizontal = Space.Gutter)) }
+        items(voices.available.distinct(), key = { it }) { name ->
+            VoiceRow(name, selected = name == voices.current, onClick = { onChoose(name) })
         }
     }
 }

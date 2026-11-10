@@ -20,6 +20,7 @@ import com.r1control.app.ui.settings.title
 sealed interface Page {
     data class Settings(val page: SettingsPage) : Page
     data object AllPlaylists : Page
+    data object NowPlaying : Page
     data class PlaylistDetails(val id: PlaylistId) : Page
 }
 
@@ -49,12 +50,14 @@ data class PageStack(val pages: List<Page>) {
 fun Page.token(): String = when (this) {
     is Page.Settings -> "settings:" + page.name
     Page.AllPlaylists -> "playlists"
+    Page.NowPlaying -> "nowplaying"
     is Page.PlaylistDetails -> "playlist:" + id.value
 }
 
 /** The page [token] names, or null for one this build cannot name (a renamed settings page): it is dropped from a restored stack. */
 fun pageOf(token: String): Page? = when {
     token == "playlists" -> Page.AllPlaylists
+    token == "nowplaying" -> Page.NowPlaying
     token.startsWith("playlist:") -> token.removePrefix("playlist:").takeIf { it.isNotEmpty() }?.let { Page.PlaylistDetails(PlaylistId(it)) }
     token.startsWith("settings:") -> SettingsPage.entries.firstOrNull { it.name == token.removePrefix("settings:") }?.let { Page.Settings(it) }
     else -> null
@@ -69,6 +72,7 @@ val PageStackSaver: Saver<PageStack, Any> = listSaver(
 fun Page.title(strings: Strings, playlists: Playlists): String = when (this) {
     is Page.Settings -> page.title(strings)
     Page.AllPlaylists -> strings.playlists
+    Page.NowPlaying -> strings.nowPlaying
     is Page.PlaylistDetails -> {
         val found = (playlists as? Playlists.Readable)?.all?.firstOrNull { it.id == id }
         when {
@@ -88,5 +92,5 @@ fun Page.title(strings: Strings, playlists: Playlists): String = when (this) {
 val Page.keepsMiniPlayer: Boolean
     get() = when (this) {
         is Page.Settings -> false
-        Page.AllPlaylists, is Page.PlaylistDetails -> true
+        Page.AllPlaylists, Page.NowPlaying, is Page.PlaylistDetails -> true
     }

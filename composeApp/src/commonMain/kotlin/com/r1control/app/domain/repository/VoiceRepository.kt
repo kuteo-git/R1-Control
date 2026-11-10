@@ -6,4 +6,7 @@ import com.r1control.app.domain.model.TtsVoices
 interface VoiceRepository {
     suspend fun voices(ttsHost: String): TtsVoices
     suspend fun setVoice(ttsHost: String, name: String)
+
+    /** The last list read for [ttsHost], without a request; [TtsVoices.None] when this repository keeps none. */
+    fun remembered(ttsHost: String): TtsVoices = TtsVoices.None
 }

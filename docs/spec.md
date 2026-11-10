@@ -110,6 +110,9 @@ Settings.
 
 **Mini player** (Music and Chat tabs, and the Music pages, while music plays): cover, title, artist and
 `position / duration` (`1:23 / 4:05`), play/pause, and Next, drawn when the Control card's is.
+Tapping it, or the queue button on the Control card, opens the **Now playing** page: the songs playing (the
+phone's list in its playing order, or the speaker's own queue read only), the current one lit; a tapped row plays
+from there in the same order. Settings pages open on the values of the shared reading, with no loading frame.
 
 ### Tab 3: Chat
 

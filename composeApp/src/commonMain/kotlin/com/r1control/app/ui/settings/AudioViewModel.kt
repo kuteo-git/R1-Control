@@ -4,6 +4,8 @@ import com.r1control.app.domain.model.AudioSettings
 import com.r1control.app.domain.repository.SpeakerException
 import com.r1control.app.domain.repository.SpeakerRepository
 import com.r1control.app.domain.usecase.POLL_IDLE_MS
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.domain.usecase.snapshotOrNull
 import com.r1control.app.ui.Held
 import com.r1control.app.ui.HeldValue
 import com.r1control.app.ui.Loadable
@@ -39,9 +41,14 @@ class AudioViewModel(
     private val debounceMillis: Long = 400,
     private val pollMillis: Long = POLL_IDLE_MS,
     holdMillis: Long = 1_500,
+    /** The feed's reading now: the page opens on its values, with no Loading frame, and the first read refreshes them. */
+    start: SpeakerView = SpeakerView.Connecting,
+    /** A write the speaker took: the shared reading is stale until it reads again. */
+    private val onWrote: () -> Unit = {},
 ) {
-    private val flow = MutableStateFlow(AudioState(Loadable.Loading, Problem.None))
-    private var reading: Loadable<AudioSettings> = Loadable.Loading
+    private var reading: Loadable<AudioSettings> =
+        start.snapshotOrNull()?.let { Loadable.Loaded(it.settings.audio) } ?: Loadable.Loading
+    private val flow = MutableStateFlow(AudioState(reading, Problem.None))
     private var readProblem: Problem = Problem.None
     private var writeProblem: Problem = Problem.None
     private val loudness = HeldValue<Int>(scope, holdMillis)
@@ -132,7 +139,10 @@ class AudioViewModel(
         }
         if (last) held.answered(value, taken)
         show()
-        if (taken && last) read()
+        if (taken && last) {
+            onWrote()
+            read()
+        }
     }
 
     private suspend fun read() {

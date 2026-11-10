@@ -7,12 +7,12 @@ import com.r1control.app.data.repository.HttpVoiceRepository
 import com.r1control.app.data.repository.SettingsPreferencesRepository
 import com.r1control.app.domain.repository.PreferencesRepository
 import com.r1control.app.domain.repository.SpeakerRepository
-import com.r1control.app.domain.repository.VoiceRepository
 import com.r1control.app.domain.usecase.Foreground
 import com.r1control.app.domain.usecase.ForegroundSpeaker
 import com.r1control.app.domain.usecase.SaveAddress
 import com.r1control.app.domain.usecase.SearchMusic
 import com.r1control.app.domain.usecase.SendChat
+import com.r1control.app.domain.usecase.VoiceCache
 import io.ktor.client.HttpClient
 import kotlin.time.Clock
 
@@ -30,7 +30,7 @@ class AppContainer(
     /** Written from the platform's lifecycle by the app shell; polled reads wait for it. */
     val foreground = Foreground()
     val speaker: SpeakerRepository = ForegroundSpeaker(HttpSpeakerRepository(httpClient, preferences), foreground)
-    val voices: VoiceRepository = HttpVoiceRepository(httpClient)
+    val voices = VoiceCache(HttpVoiceRepository(httpClient))
 
     val searchMusic = SearchMusic(speaker, preferences, nowMillis)
     val sendChat = SendChat(speaker)

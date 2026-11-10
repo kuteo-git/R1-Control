@@ -241,6 +241,8 @@ fun <T> LazyListScope.editableItems(
     removeLabel: (T) -> String,
     /** Applied to every row: the side margin of the page the list is in. */
     rowModifier: Modifier = Modifier,
+    /** False draws no handle at all, for a list whose order cannot be changed by a drag. */
+    handle: Boolean = true,
     row: @Composable RowScope.(T) -> Unit,
 ) {
     val shown = drag.order ?: items
@@ -292,7 +294,7 @@ fun <T> LazyListScope.editableItems(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val strings = LocalStrings.current
-            DragHandle(
+            if (handle) DragHandle(
                 label = handleLabel(item),
                 enabled = enabled,
                 steps = if (!enabled) emptyList() else {

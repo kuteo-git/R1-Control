@@ -26,6 +26,13 @@ sealed interface SpeakerView {
     data class Offline(val error: SpeakerException) : SpeakerView
 }
 
+/** The last snapshot the speaker answered with, or none while it has not answered. */
+fun SpeakerView.snapshotOrNull(): SpeakerSnapshot? = when (this) {
+    is SpeakerView.Online -> snapshot
+    is SpeakerView.Stale -> snapshot
+    SpeakerView.Connecting, is SpeakerView.Offline -> null
+}
+
 fun SpeakerView.after(result: PollResult): SpeakerView = when (result) {
     is PollResult.Fresh -> SpeakerView.Online(result.snapshot)
     is PollResult.Failed -> when (this) {
@@ -49,6 +56,8 @@ fun SpeakerView.after(result: PollResult): SpeakerView = when (result) {
 class SpeakerFeed(
     private val speaker: SpeakerRepository,
     private val scope: CoroutineScope,
+    /** Told of every fresh snapshot as it is applied: what the app warms from the speaker's own answer. */
+    private val onFresh: (SpeakerSnapshot) -> Unit = {},
 ) {
     private val state = MutableStateFlow<SpeakerView>(SpeakerView.Connecting)
     private val answerCount = MutableStateFlow(0)
@@ -98,7 +107,10 @@ class SpeakerFeed(
         if (applies) {
             applied = ticket
             state.value = state.value.after(result)
-            if (result is PollResult.Fresh) answerCount.value++
+            if (result is PollResult.Fresh) {
+                answerCount.value++
+                onFresh(result.snapshot)
+            }
         }
         return result
     }

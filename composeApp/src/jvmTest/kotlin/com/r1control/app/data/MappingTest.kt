@@ -40,6 +40,7 @@ class MappingTest {
             media = parse<MediaStateDto>(media).toDomain(),
             bluetooth = parse<BtStateDto>(bt).toDomain(),
             voiceControls = s.toVoiceControls(),
+            settings = s.toSettings(),
         )
     }
 

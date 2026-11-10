@@ -8,6 +8,8 @@ import com.r1control.app.domain.repository.SpeakerException
 import com.r1control.app.domain.repository.SpeakerRepository
 import com.r1control.app.domain.repository.VoiceRepository
 import com.r1control.app.domain.usecase.POLL_IDLE_MS
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.domain.usecase.snapshotOrNull
 import com.r1control.app.ui.Held
 import com.r1control.app.ui.HeldValue
 import com.r1control.app.ui.Loadable
@@ -54,23 +56,30 @@ class NewsViewModel(
     private val scope: CoroutineScope,
     private val pollMillis: Long = POLL_IDLE_MS,
     holdMillis: Long = 1_500,
+    /** The feed's reading now: the page opens on its values, with no Loading frame, and the first read refreshes them. */
+    start: SpeakerView = SpeakerView.Connecting,
+    /** A save the speaker took: the shared reading is stale until it reads again. */
+    private val onWrote: () -> Unit = {},
 ) {
+    private val begun = start.snapshotOrNull()?.settings
     private val flow = MutableStateFlow(NewsState(Loadable.Loading, NewsAction.Idle, Problem.None))
     val state: StateFlow<NewsState> = flow.asStateFlow()
     private val writing = Mutex()
     private val edit = HeldValue<NewsSettings>(scope, holdMillis)
-    private var reading: Loadable<NewsSettings> = Loadable.Loading
-    private var available: List<String> = emptyList()
+    private var reading: Loadable<NewsSettings> = begun?.let { Loadable.Loaded(it.news) } ?: Loadable.Loading
+    private var available: List<String> = begun?.let { voices.remembered(it.ttsHost).available }.orEmpty()
+    private var voicesAsked = false
     private var action = NewsAction.Idle
     private var readProblem: Problem = Problem.None
     private var writeProblem: Problem = Problem.None
-    private var saved = NewsSettings(enabled = false, time = "", voice = "", categories = emptyList())
+    private var saved = begun?.news ?: NewsSettings(enabled = false, time = "", voice = "", categories = emptyList())
 
     // Readings apply in the order they started: a poll that left before a save must not land over the read after it.
     private var started = 0L
     private var applied = 0L
 
     init {
+        show()
         scope.launch { edit.flow.collect { show() } }
         scope.launch {
             while (true) {
@@ -83,6 +92,7 @@ class NewsViewModel(
     /** The Try again under a failed first read. */
     fun load() {
         reading = Loadable.Loading
+        voicesAsked = false
         show()
         scope.launch { read() }
     }
@@ -146,6 +156,7 @@ class NewsViewModel(
         }
         saved = news
         edit.answered(news, taken = true)
+        onWrote()
         scope.launch { read() }
     }
 
@@ -173,7 +184,10 @@ class NewsViewModel(
         val ticket = ++started
         try {
             val settings = speaker.settings()
-            if (reading !is Loadable.Loaded) available = voicesOf(settings)
+            if (!voicesAsked) {
+                voicesAsked = true
+                available = voicesOf(settings).ifEmpty { available }
+            }
             if (!applies(ticket)) return
             reading = Loadable.Loaded(settings.news)
             // A reading taken while an edit is held can be older than the edit's save.

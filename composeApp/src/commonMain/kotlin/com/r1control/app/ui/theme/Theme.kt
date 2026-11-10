@@ -40,6 +40,8 @@ object Radius {
 /** The spacing scale. Nothing on a screen is spaced by a number that is not here. */
 object Space {
     val Hair = 4.dp
+    /** Between a title and the line under it, everywhere a row stacks the two. */
+    val Lines = 4.dp
     val Small = 8.dp
     val Medium = 12.dp
     val Large = 16.dp

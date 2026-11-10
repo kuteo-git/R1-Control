@@ -47,6 +47,7 @@ import com.r1control.app.ui.theme.Tokens
  * Keys are [songKey], unique by the list's invariant.
  *
  * [onAdd] null draws no add button: a playlist's own page has no use for one.
+ * [onMove] null draws no drag handle: a shuffled playing list has no order to drag.
  */
 fun LazyListScope.songItems(
     strings: Strings,
@@ -55,7 +56,7 @@ fun LazyListScope.songItems(
     drag: ListDrag<Track>,
     list: LazyListState,
     onPlay: (index: Int) -> Unit,
-    onMove: (from: Int, to: Int) -> Unit,
+    onMove: ((from: Int, to: Int) -> Unit)?,
     onRemove: (Track) -> Unit,
     onAdd: ((Track) -> Unit)?,
 ) {
@@ -65,11 +66,12 @@ fun LazyListScope.songItems(
         drag = drag,
         list = list,
         enabled = true,
-        onMove = onMove,
+        onMove = onMove ?: { _, _ -> },
         onRemove = onRemove,
         canRemove = songs.canRemove,
         handleLabel = { track -> strings.reorderSong(track.title) },
         removeLabel = { track -> strings.removeSong(track.title) },
+        handle = onMove != null,
     ) { track ->
         // A tap is not possible mid-drag, so the index is read from the list, not from the drag's order.
         TrackRow(track, mark, Modifier.weight(1f)) { onPlay(songs.indexOf(track.id)) }
@@ -79,15 +81,16 @@ fun LazyListScope.songItems(
     }
 }
 
+/** [onClick] null is a row that only shows: the speaker's own queue cannot be played from here. */
 @Composable
-internal fun TrackRow(track: Track, mark: SongMark, modifier: Modifier, onClick: () -> Unit) {
+internal fun TrackRow(track: Track, mark: SongMark, modifier: Modifier, onClick: (() -> Unit)?) {
     val strings = LocalStrings.current
     val lit = mark.isOnSpeaker(track.id)
     Row(
         modifier
             .clip(RoundedCornerShape(Radius.Row))
             .background(if (lit) Tokens.Accent.copy(alpha = 0.16f) else Color.Transparent)
-            .clickable(role = Role.Button, onClickLabel = strings.playOnSpeaker, onClick = onClick)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClickLabel = strings.playOnSpeaker, onClick = onClick) else Modifier)
             .padding(horizontal = Space.Small, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -102,7 +105,7 @@ internal fun TrackRow(track: Track, mark: SongMark, modifier: Modifier, onClick:
                 }
             }
         }
-        Column(Modifier.weight(1f).padding(start = Space.Medium), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f).padding(start = Space.Medium), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(
                 track.title,
                 style = MaterialTheme.typography.bodyLarge,

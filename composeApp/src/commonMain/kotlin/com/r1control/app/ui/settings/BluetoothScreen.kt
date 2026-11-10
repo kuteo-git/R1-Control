@@ -169,7 +169,7 @@ internal fun DeviceHeader(device: BluetoothDevice) {
         if (device.connected || device.streamingIn) {
             Box(Modifier.size(8.dp).clip(CircleShape).background(Tokens.Accent))
         }
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(device.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val sub = when {
                 device.streamingIn -> strings.btStreamingIn

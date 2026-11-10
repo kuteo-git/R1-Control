@@ -374,6 +374,17 @@ class MusicStoreTest {
         assertTrue(a != ids, "an order of eight songs that is the order they had is not a shuffle")
     }
 
+    @Test fun playFromTakesAPositionOfTheOrderItIsPlayingInAndKeepsTheShuffle() = runTest {
+        val rig = rig()
+        val id = rig.store.made("L", songs("a", "b", "c", "d"))
+        rig.store.shuffle(ListRef.Saved(id))
+        val order = assertIs<PlayOrder.Shuffled>(assertIs<Playing.FromList>(rig.lists.playing).order)
+        rig.speaker.calls.clear()
+        rig.store.playFrom(ListRef.Saved(id), order, 2)
+        assertEquals("play ${order.ids} from 2", rig.speaker.calls.single())
+        assertEquals(order, assertIs<Playing.FromList>(rig.lists.playing).order, "the same shuffle, not a new draw")
+    }
+
     @Test fun shuffleStartsFromTheFirstOfTheShuffledOrderAndNextFollowsIt() = runTest {
         val rig = rig()
         val id = rig.store.made("L", songs("a", "b", "c", "d"))

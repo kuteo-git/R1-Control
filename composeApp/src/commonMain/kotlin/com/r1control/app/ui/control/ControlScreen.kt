@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,10 +83,12 @@ class ControlActions(
     val onChangeAddress: () -> Unit = {},
     val onWakeWord: (Boolean) -> Unit = {},
     val onEndSession: () -> Unit = {},
+    /** The list of songs playing, on its own page. */
+    val onOpenSongs: () -> Unit = {},
 )
 
 @Composable
-fun ControlScreen(viewModel: ControlViewModel, onChangeAddress: () -> Unit) {
+fun ControlScreen(viewModel: ControlViewModel, onChangeAddress: () -> Unit, onOpenSongs: () -> Unit) {
     val state by viewModel.state.collectAsState()
     ControlContent(
         state = state,
@@ -103,6 +104,7 @@ fun ControlScreen(viewModel: ControlViewModel, onChangeAddress: () -> Unit) {
             onChangeAddress = onChangeAddress,
             onWakeWord = viewModel::onWakeWord,
             onEndSession = viewModel::onEndSession,
+            onOpenSongs = onOpenSongs,
         ),
     )
 }
@@ -247,7 +249,7 @@ private fun UnreachableBody(error: SpeakerException, actions: ControlActions) {
         glyph = { R1Icon(R1Icons.Warning, null, tint = Tokens.Error, size = 26.dp) },
         topEnd = {},
         middle = {
-            Column(Modifier.padding(vertical = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Hair)) {
+            Column(Modifier.padding(vertical = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
                 Text(strings.speakerOffline, style = MaterialTheme.typography.headlineSmall)
                 Text(
                     if (error is SpeakerException.Unreachable) strings.speakerOfflineHint(phoneAsksForLocalNetwork) else strings.describe(error),
@@ -294,7 +296,7 @@ private fun AssistantBody(now: NowPlaying.Assistant) {
         glyph = { R1Icon(R1Icons.Mic, null, tint = Tokens.OnGround, size = 28.dp) },
         topEnd = {},
         middle = {
-            Column(Modifier.padding(vertical = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Hair)) {
+            Column(Modifier.padding(vertical = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
                 Text(
                     when (now.activity) {
                         NowPlaying.Activity.Listening -> strings.assistantListening
@@ -325,11 +327,16 @@ private fun MusicBody(now: NowPlaying.Music, canNext: Boolean, actions: ControlA
     CardFrame(
         glyph = { R1Icon(R1Icons.MusicNote, null, tint = Tokens.OnGround, size = 26.dp) },
         topEnd = {
-            IconTap(R1Icons.Stop, strings.stop, actions.onStop, tint = Color.White, background = DiscOverCover, iconSize = 20.dp)
+            // One capsule for the two secondary actions, so only Pause reads as a disc.
+            Row(Modifier.clip(CircleShape).background(DiscOverCover), verticalAlignment = Alignment.CenterVertically) {
+                IconTap(R1Icons.Queue, strings.songsPlaying, actions.onOpenSongs, tint = Color.White, iconSize = 20.dp)
+                Box(Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.22f)))
+                IconTap(R1Icons.Stop, strings.stop, actions.onStop, tint = Color.White, iconSize = 20.dp)
+            }
         },
         middle = {
             Row(Modifier.fillMaxWidth().padding(vertical = Space.Small), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f).padding(end = Space.Medium), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.weight(1f).padding(end = Space.Medium), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
                     Text(
                         now.title,
                         style = MaterialTheme.typography.titleLarge,
@@ -467,8 +474,7 @@ fun VolumePill(volume: VolumeState, onDrag: (Int) -> Unit, onDone: () -> Unit, m
             },
     ) {
         if (volume.enabled) {
-            // A sliver stays at 0 so the pill still reads as something to drag.
-            Box(Modifier.fillMaxHeight().widthIn(min = 6.dp).fillMaxWidth(volume.pct / 100f).background(Tokens.VolumeFill))
+            Box(Modifier.fillMaxHeight().fillMaxWidth(volume.pct / 100f).background(Tokens.VolumeFill))
         }
         Row(
             Modifier.fillMaxSize().padding(horizontal = Space.XLarge),

@@ -8,6 +8,16 @@ import com.r1control.app.testing.bluetooth
 import com.r1control.app.testing.device
 import com.r1control.app.testing.speakerSettings
 import com.r1control.app.testing.unreachable
+import com.r1control.app.domain.usecase.SpeakerFeed
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.domain.usecase.VoiceCache
+import com.r1control.app.testing.speakerSnapshot
+import com.r1control.app.ui.i18n.EnglishStrings
+import com.r1control.app.ui.settings.SettingsHomeViewModel
+import com.r1control.app.ui.settings.SettingsSummary
+import com.r1control.app.ui.settings.bluetoothLine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import com.r1control.app.ui.settings.AdvancedViewModel
 import com.r1control.app.ui.settings.AudioViewModel
 import com.r1control.app.ui.settings.BluetoothViewModel
@@ -588,24 +598,61 @@ class AdvancedViewModelTest {
 }
 
 class SettingsHomeViewModelTest {
+    private fun TestScope.speakerWith() = FakeSpeaker().apply {
+        current = speakerSnapshot(
+            settings = speakerSettings(),
+            bluetooth = bluetooth(connected = "14:C1", devices = listOf(device("14:C1", "Kitchen").copy(connected = true))),
+        )
+    }
+
     @Test fun eachRowGetsTheValueItWillOpen() = runTest {
-        val s = FakeSpeaker().apply {
-            settings = speakerSettings()
-            bluetoothState = bluetooth(connected = "14:C1", devices = listOf(device("14:C1", "Kitchen").copy(connected = true)))
-        }
-        val vm = com.r1control.app.ui.settings.SettingsHomeViewModel(s, FakeVoices(TtsVoices("Lê Yến", listOf("Lê Yến"))), backgroundScope)
+        val s = speakerWith()
+        val feed = SpeakerFeed(s, backgroundScope)
+        val voices = VoiceCache(FakeVoices(TtsVoices("Lê Yến", listOf("Lê Yến"))))
+        val vm = SettingsHomeViewModel(feed, voices, backgroundScope)
+        backgroundScope.launch { vm.state.collect {} }
         runCurrent()
-        val summary = assertIs<Loadable.Loaded<com.r1control.app.ui.settings.SettingsSummary>>(vm.state.value).value
+        val summary = assertIs<Loadable.Loaded<SettingsSummary>>(vm.state.value).value
         assertEquals("Lê Yến", summary.voice)
         assertEquals("09:15", summary.news.time)
-        assertEquals("Playing through Kitchen", com.r1control.app.ui.settings.bluetoothLine(summary.bluetooth, com.r1control.app.ui.i18n.EnglishStrings))
+        assertEquals("Playing through Kitchen", bluetoothLine(summary.bluetooth, EnglishStrings))
+    }
+
+    @Test fun isLoadedOnItsFirstValueWhenTheFeedAlreadyHasAReading() = runTest {
+        val s = speakerWith()
+        val feed = SpeakerFeed(s, backgroundScope)
+        backgroundScope.launch { feed.view.collect {} }
+        runCurrent()
+        val voices = VoiceCache(FakeVoices(TtsVoices("Lê Yến", listOf("Lê Yến"))))
+        voices.voices("http://tts:8002")
+        val vm = SettingsHomeViewModel(feed, voices, backgroundScope)
+        // No coroutine has run since construction: this is the first frame.
+        val summary = assertIs<Loadable.Loaded<SettingsSummary>>(vm.state.value).value
+        assertEquals("Lê Yến", summary.voice)
+        assertEquals("09:15", summary.news.time)
+    }
+
+    @Test fun isLoadingOnlyWhileTheFeedHasNeverAnswered() = runTest {
+        val feed = SpeakerFeed(speakerWith(), backgroundScope)
+        val vm = SettingsHomeViewModel(feed, VoiceCache(FakeVoices()), backgroundScope)
+        assertEquals(Loadable.Loading, vm.state.value)
+    }
+
+    @Test fun anOfflineSpeakerIsAFailure() = runTest {
+        val s = speakerWith().apply { pollFailure = unreachable }
+        val feed = SpeakerFeed(s, backgroundScope)
+        val vm = SettingsHomeViewModel(feed, VoiceCache(FakeVoices()), backgroundScope)
+        backgroundScope.launch { vm.state.collect {} }
+        runCurrent()
+        assertEquals(Loadable.Failed(unreachable), vm.state.value)
     }
 
     @Test fun aVoiceServerThatDoesNotAnswerLeavesOnlyTheVoiceUnsaid() = runTest {
-        val s = FakeSpeaker().apply { settings = speakerSettings() }
-        val vm = com.r1control.app.ui.settings.SettingsHomeViewModel(s, FakeVoices(failure = unreachable), backgroundScope)
+        val feed = SpeakerFeed(speakerWith(), backgroundScope)
+        val vm = SettingsHomeViewModel(feed, VoiceCache(FakeVoices(failure = unreachable)), backgroundScope)
+        backgroundScope.launch { vm.state.collect {} }
         runCurrent()
-        val summary = assertIs<Loadable.Loaded<com.r1control.app.ui.settings.SettingsSummary>>(vm.state.value).value
+        val summary = assertIs<Loadable.Loaded<SettingsSummary>>(vm.state.value).value
         assertEquals("", summary.voice)
     }
 
@@ -623,5 +670,67 @@ class SettingsPagesTest {
             assertTrue(page.title(com.r1control.app.ui.i18n.EnglishStrings).isNotEmpty(), "$page")
             assertTrue(page.title(com.r1control.app.ui.i18n.VietnameseStrings).isNotEmpty(), "$page")
         }
+    }
+}
+
+class SettingsFromTheFeedTest {
+    private val reading = SpeakerView.Online(speakerSnapshot(settings = speakerSettings(audio = audioSettings(loudness = 1200))))
+
+    @Test fun audioStartsFromTheSnapshotWithNoLoadingFrame() = runTest {
+        val s = FakeSpeaker().apply { settings = speakerSettings() }
+        val vm = AudioViewModel(s, backgroundScope, start = reading)
+        assertEquals(1200, (vm.state.value.audio as Loadable.Loaded).value.loudnessMb)
+        runCurrent()
+        assertEquals(1000, (vm.state.value.audio as Loadable.Loaded).value.loudnessMb, "the first read refreshes it")
+    }
+
+    @Test fun audioWithNothingInTheFeedFallsBackToLoading() = runTest {
+        val vm = AudioViewModel(FakeSpeaker().apply { settings = speakerSettings() }, backgroundScope)
+        assertEquals(Loadable.Loading, vm.state.value.audio)
+    }
+
+    @Test fun newsAndBluetoothStartLoadedFromTheSnapshot() = runTest {
+        val s = FakeSpeaker().apply { settings = speakerSettings() }
+        val news = NewsViewModel(s, FakeVoices(), backgroundScope, start = reading)
+        assertIs<Loadable.Loaded<*>>(news.state.value.draft)
+        val bt = BluetoothViewModel(s, backgroundScope, start = reading)
+        assertIs<Loadable.Loaded<*>>(bt.state.value.bluetooth)
+    }
+
+    @Test fun voiceServedFromTheCacheOnTheSecondVisitAsksNoOneBeforeTheFirstFrame() = runTest {
+        val fake = FakeVoices(TtsVoices("b", listOf("a", "b", "c")))
+        val cache = VoiceCache(fake)
+        val s = FakeSpeaker().apply { settings = speakerSettings() }
+        val first = VoiceViewModel(s, cache, backgroundScope, start = reading)
+        assertEquals(Loadable.Loading, first.state.value.content, "nothing remembered yet")
+        runCurrent()
+        val second = VoiceViewModel(s, cache, backgroundScope, start = reading)
+        val shown = assertIs<VoiceList.Voices>((second.state.value.content as Loadable.Loaded).value)
+        assertEquals("b", shown.voices.current)
+    }
+
+    @Test fun aChosenVoiceIsRememberedForTheNextVisit() = runTest {
+        val cache = VoiceCache(FakeVoices(TtsVoices("a", listOf("a", "b"))))
+        val s = FakeSpeaker().apply { settings = speakerSettings() }
+        val vm = VoiceViewModel(s, cache, backgroundScope, start = reading)
+        runCurrent()
+        vm.choose("b")
+        runCurrent()
+        assertEquals("b", cache.remembered("http://tts:8002").current)
+    }
+
+    @Test fun warmReadsAHostOnceAndAFailureMayBeTriedAgain() = runTest {
+        val fake = FakeVoices(failure = unreachable)
+        val cache = VoiceCache(fake)
+        cache.warm("http://tts", backgroundScope)
+        runCurrent()
+        fake.failure = null
+        cache.warm("http://tts", backgroundScope)
+        runCurrent()
+        assertEquals(listOf("a", "b"), cache.remembered("http://tts").available)
+        fake.askedHost = ""
+        cache.warm("http://tts", backgroundScope)
+        runCurrent()
+        assertEquals("", fake.askedHost, "a host already read is not asked again")
     }
 }

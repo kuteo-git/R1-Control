@@ -229,3 +229,13 @@ under `/Volumes/Data2/dev/`. Android allows cleartext HTTP to any host
   reports SPEAKING for a whole song: drawn only by `canEndSession`, never over a
   Stale reading. `wake_enabled` absent means an R1 build without both routes,
   and the R1 reads anything but `on=1` as off.
+- **The Now playing page answers "which songs are playing"** (`nowPlayingPageOf`):
+  the app's list in its playing order (`FromApp`, read through `playsFrom`, so a
+  cleared search still has it), else the speaker's own queue read only
+  (`FromSpeaker`), else nothing. A tapped row plays from its place in that same
+  order (`MusicStore.playFrom`), never a new shuffle.
+- **Settings draw from the feed.** `SpeakerSnapshot.settings` comes from the
+  `/api/state` body the feed already reads; Home and the pages open on it, with
+  no Loading frame, and refresh behind it. The voice list is remembered by
+  `VoiceCache` (the one owner, warmed from the first snapshot that names a voice
+  server). A page that writes tells the feed to read again.

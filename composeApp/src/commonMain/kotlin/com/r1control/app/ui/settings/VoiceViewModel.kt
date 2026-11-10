@@ -4,6 +4,8 @@ import com.r1control.app.domain.model.TtsVoices
 import com.r1control.app.domain.repository.SpeakerException
 import com.r1control.app.domain.repository.SpeakerRepository
 import com.r1control.app.domain.repository.VoiceRepository
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.domain.usecase.snapshotOrNull
 import com.r1control.app.ui.Loadable
 import com.r1control.app.ui.Problem
 import kotlinx.coroutines.CancellationException
@@ -27,38 +29,57 @@ class VoiceViewModel(
     private val speaker: SpeakerRepository,
     private val voices: VoiceRepository,
     private val scope: CoroutineScope,
+    /** The reading the feed holds now: with a remembered list the page opens on it, and the read below refreshes it unseen. */
+    start: SpeakerView = SpeakerView.Connecting,
 ) {
-    private val flow = MutableStateFlow(VoiceState(Loadable.Loading, Problem.None))
-    private var ttsHost = ""
+    private val known = start.snapshotOrNull()?.settings
+    private val remembered = known?.let { voices.remembered(it.ttsHost) } ?: TtsVoices.None
+    private val flow = MutableStateFlow(
+        when {
+            known == null -> VoiceState(Loadable.Loading, Problem.None)
+            !known.hasTtsHost -> VoiceState(Loadable.Loaded(VoiceList.NoServer), Problem.None)
+            remembered.isKnown -> VoiceState(Loadable.Loaded(VoiceList.Voices(remembered)), Problem.None)
+            else -> VoiceState(Loadable.Loading, Problem.None)
+        },
+    )
+    private var ttsHost = known?.ttsHost.orEmpty()
     /** The voice the server last took. */
-    private var accepted = ""
+    private var accepted = remembered.current
     private var latestChoice = 0
     private val sending = Mutex()
 
     val state: StateFlow<VoiceState> = flow.asStateFlow()
 
     init {
-        load()
+        read(visible = false)
     }
 
+    /** The Try again under a failed read. */
     fun load() {
         flow.value = VoiceState(Loadable.Loading, Problem.None)
+        read(visible = true)
+    }
+
+    /** Reads the list. A refresh of what is already shown replaces it unseen, and never over a choice made meanwhile. */
+    private fun read(visible: Boolean) {
         scope.launch {
-            flow.value = try {
+            val shown = try {
                 val settings = speaker.settings()
                 ttsHost = settings.ttsHost
                 if (!settings.hasTtsHost) {
                     VoiceState(Loadable.Loaded(VoiceList.NoServer), Problem.None)
                 } else {
                     val list = voices.voices(settings.ttsHost)
-                    accepted = list.current
+                    if (latestChoice == 0) accepted = list.current
                     VoiceState(Loadable.Loaded(VoiceList.Voices(list)), Problem.None)
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: SpeakerException) {
-                VoiceState(Loadable.Failed(e), Problem.None)
+                // A failed refresh leaves what is shown; only a first read has nothing to keep.
+                if (flow.value.content is Loadable.Loaded) null else VoiceState(Loadable.Failed(e), Problem.None)
             }
+            if (shown != null && (latestChoice == 0 || visible)) flow.value = shown
         }
     }
 

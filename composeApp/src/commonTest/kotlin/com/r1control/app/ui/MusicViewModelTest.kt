@@ -53,6 +53,16 @@ class MusicViewModelTest {
         }
     }
 
+    @Test fun clearingTheQueryEmptiesTheFieldAndKeepsTheResults() = runTest {
+        val s = FakeSpeaker()
+        val vm = music(s)
+        showing(vm, s, listOf(track("a1"), track("a2")))
+        vm.clearQuery()
+        assertEquals("", vm.query.value)
+        assertIs<MusicPhase.Done>(vm.state.value.phase)
+        assertEquals(2, vm.state.value.results.size)
+    }
+
     @Test fun startsWithAnEmptyFieldAndNoSearch() = runTest {
         val vm = music(FakeSpeaker())
         runCurrent()

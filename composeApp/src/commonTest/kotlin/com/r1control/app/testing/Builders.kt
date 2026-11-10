@@ -63,7 +63,8 @@ fun speakerSnapshot(
     voiceAwake: Boolean = false,
     chat: List<ChatMessage> = emptyList(),
     voiceControls: VoiceControls = VoiceControls.Absent,
-) = SpeakerSnapshot(Volume(40, VolumeScale(15)), voice, voiceAwake, chat, media, bluetooth, voiceControls)
+    settings: SpeakerSettings = speakerSettings(),
+) = SpeakerSnapshot(Volume(40, VolumeScale(15)), voice, voiceAwake, chat, media, bluetooth, voiceControls, settings)
 
 /** A repository whose every call fails loudly; a test overrides only what it uses. */
 open class StubSpeaker : SpeakerRepository {

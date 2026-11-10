@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 
 class PagesTest {
     private val every = SettingsPage.entries.map { Page.Settings(it) } +
-        Page.AllPlaylists + Page.PlaylistDetails(PlaylistId("p1700000000000a1f"))
+        Page.AllPlaylists + Page.NowPlaying + Page.PlaylistDetails(PlaylistId("p1700000000000a1f"))
 
     @Test fun everyPageRoundTripsThroughItsToken() {
         every.forEach { assertEquals(it, pageOf(it.token()), "$it") }

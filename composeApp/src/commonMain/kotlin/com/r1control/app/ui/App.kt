@@ -56,6 +56,7 @@ import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.music.MiniPlayer
 import com.r1control.app.ui.music.MiniState
 import com.r1control.app.ui.music.MusicScreen
+import com.r1control.app.ui.music.NowPlayingScreen
 import com.r1control.app.ui.music.PlaylistScreen
 import com.r1control.app.ui.music.PlaylistViewModel
 import com.r1control.app.ui.music.PlaylistsScreen
@@ -181,7 +182,11 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                     PageHost(shown, container, models, address, open, goneFrom, findSongs)
                 } else {
                     when (tab) {
-                        Tab.Control -> ControlScreen(models.control, onChangeAddress = { open(Page.Settings(SettingsPage.Advanced)) })
+                        Tab.Control -> ControlScreen(
+                            models.control,
+                            onChangeAddress = { open(Page.Settings(SettingsPage.Advanced)) },
+                            onOpenSongs = { open(Page.NowPlaying) },
+                        )
                         Tab.Music -> MusicScreen(models.music, onOpen = open)
                         Tab.Chat -> ChatScreen(models.chat)
                     }
@@ -191,7 +196,7 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
         if (page == null) {
             Column(Modifier.onSizeChanged { barsHeight = with(density) { it.height.toDp() } }) {
                 if (shownMini != null && tab != Tab.Control) {
-                    MiniPlayer(shownMini, onOpen = { tabIndex = Tab.Control.ordinal }, onToggle = models.mini::onPlayPause, onNext = models.mini::onNext)
+                    MiniPlayer(shownMini, onOpen = { open(Page.NowPlaying) }, onToggle = models.mini::onPlayPause, onNext = models.mini::onNext)
                 }
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
                     Tab.entries.forEach { entry ->
@@ -216,7 +221,7 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
             Box(Modifier.background(Tokens.Card).navigationBarsPadding()) {
                 MiniPlayer(
                     shownMini,
-                    onOpen = { stack = PageStack.Tabs; tabIndex = Tab.Control.ordinal },
+                    onOpen = { if (page != Page.NowPlaying) open(Page.NowPlaying) },
                     onToggle = models.mini::onPlayPause,
                     onNext = models.mini::onNext,
                 )
@@ -249,15 +254,27 @@ private fun PageHost(
         when (page) {
             is Page.Settings -> when (page.page) {
                 SettingsPage.Home -> SettingsHome(
-                    remember { SettingsHomeViewModel(container.speaker, container.voices, scope) },
+                    remember { SettingsHomeViewModel(models.feed, container.voices, scope) },
                     address.toString(), models.app.language,
                 ) { open(Page.Settings(it)) }
-                SettingsPage.Audio -> AudioScreen(remember { AudioViewModel(container.speaker, scope) })
-                SettingsPage.Voice -> VoiceScreen(remember { VoiceViewModel(container.speaker, container.voices, scope) })
-                SettingsPage.News -> NewsScreen(remember { NewsViewModel(container.speaker, container.voices, scope) })
-                SettingsPage.Bluetooth -> BluetoothMenu(remember { BluetoothViewModel(container.speaker, scope) }) { open(Page.Settings(it)) }
-                SettingsPage.BluetoothOutput -> BluetoothOutputScreen(remember { BluetoothViewModel(container.speaker, scope) })
-                SettingsPage.BluetoothInput -> BluetoothInputScreen(remember { BluetoothViewModel(container.speaker, scope) })
+                SettingsPage.Audio -> AudioScreen(
+                    remember { AudioViewModel(container.speaker, scope, start = models.feed.view.value, onWrote = models.feed::refresh) },
+                )
+                SettingsPage.Voice -> VoiceScreen(
+                    remember { VoiceViewModel(container.speaker, container.voices, scope, start = models.feed.view.value) },
+                )
+                SettingsPage.News -> NewsScreen(
+                    remember { NewsViewModel(container.speaker, container.voices, scope, start = models.feed.view.value, onWrote = models.feed::refresh) },
+                )
+                SettingsPage.Bluetooth -> BluetoothMenu(
+                    remember { BluetoothViewModel(container.speaker, scope, start = models.feed.view.value, onChanged = models.feed::refresh) },
+                ) { open(Page.Settings(it)) }
+                SettingsPage.BluetoothOutput -> BluetoothOutputScreen(
+                    remember { BluetoothViewModel(container.speaker, scope, start = models.feed.view.value, onChanged = models.feed::refresh) },
+                )
+                SettingsPage.BluetoothInput -> BluetoothInputScreen(
+                    remember { BluetoothViewModel(container.speaker, scope, start = models.feed.view.value, onChanged = models.feed::refresh) },
+                )
                 SettingsPage.Language -> LanguageScreen(models.app)
                 SettingsPage.Advanced -> AdvancedScreen(
                     address = remember { AddressViewModel(address.toString(), container.saveAddress, scope, models::addressSaved) },
@@ -265,6 +282,11 @@ private fun PageHost(
                 )
             }
             Page.AllPlaylists -> PlaylistsScreen(models.store, onOpen = open)
+            Page.NowPlaying -> NowPlayingScreen(
+                models.nowPlaying,
+                onOpenPlaylist = { open(Page.PlaylistDetails(it)) },
+                onFindSongs = findSongs,
+            )
             is Page.PlaylistDetails -> PlaylistScreen(
                 remember { PlaylistViewModel(page.id, models.store, models.feed, scope) },
                 onGone = { goneFrom(page) },

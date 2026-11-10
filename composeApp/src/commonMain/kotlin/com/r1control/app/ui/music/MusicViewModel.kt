@@ -188,6 +188,11 @@ class MusicViewModel(
         queryFlow.value = text
     }
 
+    /** The field's X: the text goes, the results stay (they may be what is playing, and have their own Clear results). */
+    fun clearQuery() {
+        queryFlow.value = ""
+    }
+
     val canSearch: Boolean get() = keywordsIn(queryFlow.value).isNotEmpty()
 
     fun search() = run(keywordsIn(queryFlow.value))

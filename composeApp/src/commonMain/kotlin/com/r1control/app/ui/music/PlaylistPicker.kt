@@ -1,6 +1,7 @@
 package com.r1control.app.ui.music
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -104,7 +105,7 @@ private fun PickerLine(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         R1Icon(icon, null, tint = Tokens.OnGroundMuted, size = 24.dp)
-        Column(Modifier.weight(1f).padding(horizontal = Space.Large)) {
+        Column(Modifier.weight(1f).padding(horizontal = Space.Large), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle.isNotEmpty()) {
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

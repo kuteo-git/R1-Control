@@ -181,6 +181,14 @@ interface Strings {
     val addAll: String
     val alreadyInPlaylist: String
     val playingFromHere: String
+    /** The Now playing page: its title, the Control card's button to it, and where the songs come from. */
+    val nowPlaying: String
+    val clearSearch: String
+    val songsPlaying: String
+    fun playingFromPlaylist(name: String): String
+    val playingFromResults: String
+    val playingFromSpeaker: String
+    val nowPlayingNothing: String
     val playlistEmptyHint: String
     val playlistsUnreadable: String
     val playlistsKeptAside: String
@@ -394,6 +402,13 @@ object EnglishStrings : Strings {
     override val addAll = "Add all"
     override val alreadyInPlaylist = "Already in this playlist"
     override val playingFromHere = "Playing from this playlist"
+    override val nowPlaying = "Now playing"
+    override val clearSearch = "Clear search"
+    override val songsPlaying = "Songs playing"
+    override fun playingFromPlaylist(name: String) = "Playing from $name"
+    override val playingFromResults = "Playing from search results"
+    override val playingFromSpeaker = "Playing from the speaker's own queue"
+    override val nowPlayingNothing = "Nothing is playing. Find a song to play on the speaker."
     override val playlistEmptyHint = "No songs yet. Search for music and tap the add button on a song."
     override val playlistsUnreadable = "The saved playlists could not be read, so none are shown. Nothing was changed."
     override val playlistsKeptAside = "The saved playlists could not be read. They were kept aside, and this list starts empty."
@@ -606,6 +621,13 @@ object VietnameseStrings : Strings {
     override val addAll = "Thêm tất cả"
     override val alreadyInPlaylist = "Đã có trong danh sách này"
     override val playingFromHere = "Đang phát từ danh sách này"
+    override val nowPlaying = "Đang phát"
+    override val clearSearch = "Xoá ô tìm"
+    override val songsPlaying = "Các bài đang phát"
+    override fun playingFromPlaylist(name: String) = "Đang phát từ $name"
+    override val playingFromResults = "Đang phát từ kết quả tìm kiếm"
+    override val playingFromSpeaker = "Đang phát từ hàng đợi của loa"
+    override val nowPlayingNothing = "Loa chưa phát gì. Tìm một bài để phát trên loa."
     override val playlistEmptyHint = "Chưa có bài nào. Tìm nhạc rồi bấm nút thêm ở một bài."
     override val playlistsUnreadable = "Không đọc được các danh sách phát đã lưu nên chưa hiện danh sách nào. Dữ liệu vẫn được giữ nguyên."
     override val playlistsKeptAside = "Không đọc được các danh sách phát đã lưu. Bản cũ được giữ riêng, danh sách bắt đầu lại từ trống."

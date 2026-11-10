@@ -250,6 +250,13 @@ class MusicStore(
      */
     suspend fun play(ref: ListRef, index: Int): CommandOutcome = start(ref, PlayOrder.Listed, index)
 
+    /**
+     * Plays [ref] from position [index] of [order], the order it already plays in:
+     * a row tapped on the Now playing page continues the same shuffle, it does not
+     * draw a new one. The pointer keeps [order].
+     */
+    suspend fun playFrom(ref: ListRef, order: PlayOrder, index: Int): CommandOutcome = start(ref, order, index)
+
     /** Plays [ref] in a new random order from its first song. The list itself is not reordered. */
     suspend fun shuffle(ref: ListRef): CommandOutcome {
         val songs = lists.value.songs(ref)

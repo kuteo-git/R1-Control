@@ -127,7 +127,7 @@ fun ScreenTopBar(
         } else {
             Spacer(Modifier.width(Space.Small))
         }
-        Column(Modifier.weight(1f).padding(start = Space.Small)) {
+        Column(Modifier.weight(1f).padding(start = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(title, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle.isNotEmpty()) {
                 Text(
@@ -398,7 +398,7 @@ fun SettingsRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         R1Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 26.dp)
-        Column(Modifier.weight(1f).padding(horizontal = Space.Large)) {
+        Column(Modifier.weight(1f).padding(horizontal = Space.Large), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             if (subtitle.isNotEmpty()) {
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -426,7 +426,7 @@ fun SwitchRow(
             .padding(horizontal = Space.Gutter, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             if (subtitle.isNotEmpty()) {
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

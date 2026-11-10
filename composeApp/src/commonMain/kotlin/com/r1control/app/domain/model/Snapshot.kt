@@ -13,6 +13,8 @@ data class SpeakerSnapshot(
     val media: MediaState,
     val bluetooth: BluetoothState,
     val voiceControls: VoiceControls,
+    /** From the `/api/state` body the rest of the reading already came from: Settings draws from the feed, with no request of its own. */
+    val settings: SpeakerSettings,
 ) {
     val nowPlaying: NowPlaying get() = nowPlayingOf(this)
 }

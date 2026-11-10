@@ -39,4 +39,11 @@ data class SpeakerSettings(
     val hasTtsHost: Boolean get() = ttsHost.isNotEmpty()
 }
 
-data class TtsVoices(val current: String, val available: List<String>)
+data class TtsVoices(val current: String, val available: List<String>) {
+    /** A list that was really read: the voice server always names some voices. */
+    val isKnown: Boolean get() = available.isNotEmpty()
+
+    companion object {
+        val None = TtsVoices("", emptyList())
+    }
+}

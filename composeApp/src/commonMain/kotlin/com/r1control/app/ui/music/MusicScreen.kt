@@ -103,6 +103,7 @@ class MusicActions(
     val onNewPlaylist: (String) -> Unit = {},
     val onOpen: (Page) -> Unit = {},
     val onClear: () -> Unit = {},
+    val onClearQuery: () -> Unit = {},
     /** The field took the focus it was asked to take. */
     val onSearchFocused: () -> Unit = {},
 )
@@ -139,6 +140,7 @@ fun MusicScreen(viewModel: MusicViewModel, onOpen: (Page) -> Unit) {
             },
             onOpen = onOpen,
             onClear = viewModel::clearResults,
+            onClearQuery = viewModel::clearQuery,
             onSearchFocused = viewModel::onSearchFocused,
         ),
     )
@@ -187,6 +189,15 @@ fun MusicContent(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     onDone = if (canSearch) search else null,
                     focusRequester = field,
+                    trailing = {
+                        if (query.isNotEmpty()) {
+                            IconTap(
+                                R1Icons.Close, strings.clearSearch,
+                                { actions.onClearQuery(); field.requestFocus() },
+                                tint = Tokens.OnGroundMuted, iconSize = 20.dp,
+                            )
+                        }
+                    },
                 )
                 IconTap(
                     icon = R1Icons.Search,
@@ -327,7 +338,7 @@ private fun LazyListScope.idleItems(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             R1Icon(R1Icons.Search, null, tint = Tokens.OnGroundMuted, size = 22.dp)
-            Column(Modifier.weight(1f).padding(horizontal = Space.Large)) {
+            Column(Modifier.weight(1f).padding(horizontal = Space.Large), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
                 Text(
                     recent.keywords.joinToString(", "),
                     style = MaterialTheme.typography.bodyLarge,
@@ -423,7 +434,7 @@ private fun LazyListScope.resultItems(
     )
 }
 
-/** The bar above the tab bar while music plays on the speaker; a tap opens the Control tab. */
+/** The bar above the tab bar while music plays on the speaker; a tap opens the songs playing. */
 @Composable
 fun MiniPlayer(state: MiniState.Showing, onOpen: () -> Unit, onToggle: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
@@ -436,7 +447,7 @@ fun MiniPlayer(state: MiniState.Showing, onOpen: () -> Unit, onToggle: () -> Uni
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Cover(state.coverUrl, 48.dp, radius = Radius.Cover)
-        Column(Modifier.weight(1f).padding(horizontal = Space.Medium), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+        Column(Modifier.weight(1f).padding(horizontal = Space.Medium), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
             Text(state.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val problem = state.problem
             val phase = state.phase
@@ -529,6 +540,12 @@ private val recentsSample = listOf(RecentSearch(listOf("thanh ngân", "sương t
 @Composable
 private fun MusicEmptyPreview() = PreviewHost(EnglishStrings) {
     MusicContent(state(MusicPhase.Idle), "", SongMark.None, focusSearch = false, MusicActions())
+}
+
+@Preview
+@Composable
+private fun MusicQueryWithClearPreview() = PreviewHost(EnglishStrings) {
+    MusicContent(state(MusicPhase.Idle, recentsSample), "thanh ngân, bolero", SongMark.None, focusSearch = false, MusicActions())
 }
 
 @Preview

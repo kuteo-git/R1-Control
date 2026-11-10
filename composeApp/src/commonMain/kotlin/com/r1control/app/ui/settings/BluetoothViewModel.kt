@@ -4,6 +4,8 @@ import com.r1control.app.domain.model.BluetoothDevice
 import com.r1control.app.domain.model.BluetoothState
 import com.r1control.app.domain.repository.SpeakerException
 import com.r1control.app.domain.repository.SpeakerRepository
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.domain.usecase.snapshotOrNull
 import com.r1control.app.ui.Loadable
 import com.r1control.app.ui.Problem
 import com.r1control.app.ui.afterGoodRead
@@ -40,8 +42,17 @@ class BluetoothViewModel(
     private val speaker: SpeakerRepository,
     private val scope: CoroutineScope,
     private val pollMillis: Long = 1_000,
+    /** The feed's reading now: the page opens on its values, with no Loading frame, and the first read refreshes them. */
+    start: SpeakerView = SpeakerView.Connecting,
+    /** A command the speaker took: the shared reading is stale until it reads again. */
+    private val onChanged: () -> Unit = {},
 ) {
-    private val flow = MutableStateFlow(BluetoothScreenState(Loadable.Loading, Problem.None, ForgetAsk.None))
+    private val flow = MutableStateFlow(
+        BluetoothScreenState(
+            start.snapshotOrNull()?.let { Loadable.Loaded(it.bluetooth) } ?: Loadable.Loading,
+            Problem.None, ForgetAsk.None,
+        ),
+    )
     val state: StateFlow<BluetoothScreenState> = flow.asStateFlow()
     private var commandProblem: Problem = Problem.None
     private var readProblem: Problem = Problem.None
@@ -93,6 +104,7 @@ class BluetoothViewModel(
                 Problem.Failed(e)
             }
             showProblem()
+            if (commandProblem is Problem.None) onChanged()
             read(afterCommand = true)
         }
     }
