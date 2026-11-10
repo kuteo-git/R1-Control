@@ -253,6 +253,7 @@ fun <T> LazyListScope.editableItems(
         val index by rememberUpdatedState(i)
         val latest by rememberUpdatedState(items)
         val density = LocalDensity.current
+        val haptics = LocalHaptics.current
         // The row the finger holds takes its new place in [order] at once, and a lazy list keeps the item
         // it has at the top by key: when the held row or the one it swaps with is the first on screen, the
         // list would follow it and scroll a row away under the finger. The position is put back.
@@ -260,7 +261,10 @@ fun <T> LazyListScope.editableItems(
             val first = list.firstVisibleItemIndex
             val offset = list.firstVisibleItemScrollOffset
             val moved = drag.dragBy(dy) { at -> rowHeight(list, drag, key, at) }
-            if (moved) list.requestScrollToItem(first, offset)
+            if (moved) {
+                list.requestScrollToItem(first, offset)
+                haptics.play(Haptic.Tick)
+            }
             moved
         }
         if (held) {
@@ -307,8 +311,14 @@ fun <T> LazyListScope.editableItems(
                 modifier = Modifier.pointerInput(itemKey, enabled) {
                     if (!enabled) return@pointerInput
                     detectDragGestures(
-                        onDragStart = { drag.start(index, latest) },
-                        onDragEnd = { drag.end()?.let { (from, to) -> onMove(from, to) } },
+                        onDragStart = {
+                            haptics.play(Haptic.Lift)
+                            drag.start(index, latest)
+                        },
+                        onDragEnd = {
+                            haptics.play(Haptic.Knock)
+                            drag.end()?.let { (from, to) -> onMove(from, to) }
+                        },
                         onDragCancel = { drag.cancel() },
                     ) { change, amount ->
                         change.consume()

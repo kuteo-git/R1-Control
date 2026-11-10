@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import com.r1control.app.ui.components.tappable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.TtsVoices
@@ -107,7 +107,7 @@ internal fun VoiceRow(name: String, selected: Boolean, onClick: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .tappable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = Space.Gutter),
         verticalAlignment = Alignment.CenterVertically,
     ) {

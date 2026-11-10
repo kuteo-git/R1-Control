@@ -43,10 +43,13 @@ import com.r1control.app.domain.model.R1Address
 import com.r1control.app.ui.address.AddressViewModel
 import com.r1control.app.ui.address.FirstRunScreen
 import com.r1control.app.ui.chat.ChatScreen
+import com.r1control.app.ui.components.Haptic
 import com.r1control.app.ui.components.IconTap
+import com.r1control.app.ui.components.LocalHaptics
 import com.r1control.app.ui.components.closesKeyboardOnTap
 import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.ScreenTopBar
+import com.r1control.app.ui.components.rememberPlatformHaptics
 import com.r1control.app.ui.control.ControlScreen
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.Strings
@@ -97,7 +100,7 @@ fun App(container: AppContainer) {
     val choice by holder.models.app.language.collectAsState()
     val device = remember { deviceLanguage() }
     val strings = choice.resolve(device).strings
-    CompositionLocalProvider(LocalStrings provides strings) {
+    CompositionLocalProvider(LocalStrings provides strings, LocalHaptics provides rememberPlatformHaptics()) {
         R1Theme {
             // Surface, not a bare Box: it is what gives Text its content colour. Without it text is black on black.
             Surface(Modifier.fillMaxSize().closesKeyboardOnTap(), color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
@@ -150,6 +153,7 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     val density = LocalDensity.current
     val mini by models.mini.state.collectAsState()
     val shownMini = mini as? MiniState.Showing
+    val haptics = LocalHaptics.current
 
     // The one back handler: Music pages use it too, and it returns to the page somebody was on.
     val back = { stack = stack.back() }
@@ -202,7 +206,10 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                     Tab.entries.forEach { entry ->
                         NavigationBarItem(
                             selected = tab == entry,
-                            onClick = { tabIndex = entry.ordinal },
+                            onClick = {
+                                if (tab != entry) haptics.play(Haptic.Tap)
+                                tabIndex = entry.ordinal
+                            },
                             icon = { R1Icon(entry.icon, null, tint = LocalContentColorOf(tab == entry)) },
                             label = { Text(labelOf(entry, strings)) },
                             colors = NavigationBarItemDefaults.colors(

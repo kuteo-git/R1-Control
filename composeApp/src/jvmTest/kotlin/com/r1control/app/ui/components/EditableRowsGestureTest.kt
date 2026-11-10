@@ -54,9 +54,10 @@ class EditableRowsGestureTest {
         val list = LazyListState()
         val moves = mutableListOf<Pair<Int, Int>>()
         val removed = mutableListOf<String>()
+        val felt = mutableListOf<Haptic>()
         private var time = 0L
         val scene = ImageComposeScene(width = (390 * density).toInt(), height = (heightDp * density).toInt(), density = Density(density)) {
-            CompositionLocalProvider(LocalStrings provides EnglishStrings) {
+            CompositionLocalProvider(LocalStrings provides EnglishStrings, LocalHaptics provides Haptics { felt += it }) {
                 R1Theme {
                     Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
                         val drag = rememberListDrag(songs.tracks)
@@ -118,6 +119,7 @@ class EditableRowsGestureTest {
             rig.release(rig.handleX(), end)
             rig.frames(3)
             assertEquals(listOf(0 to 2), rig.moves)
+            assertEquals(listOf(Haptic.Lift, Haptic.Tick, Haptic.Tick, Haptic.Knock), rig.felt, "picked up, two rows passed, put down")
         } finally {
             rig.close()
         }

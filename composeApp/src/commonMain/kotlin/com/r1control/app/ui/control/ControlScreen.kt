@@ -42,6 +42,10 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import com.r1control.app.ui.components.LocalHaptics
+import com.r1control.app.ui.components.notchFeel
+import com.r1control.app.ui.components.notchOf
+import com.r1control.app.ui.components.volumeNotches
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -430,6 +434,8 @@ private fun MusicBody(now: NowPlaying.Music, canNext: Boolean, actions: ControlA
 fun VolumePill(volume: VolumeState, onDrag: (Int) -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
     val strings = LocalStrings.current
     val level by rememberUpdatedState(volume.pct)
+    val notches by rememberUpdatedState(volumeNotches(volume.scale.steps))
+    val haptics = LocalHaptics.current
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -458,17 +464,23 @@ fun VolumePill(volume: VolumeState, onDrag: (Int) -> Unit, onDone: () -> Unit, m
                 if (!volume.enabled) return@pointerInput
                 var start = 0
                 var travelled = 0f
+                var felt = 0
                 detectHorizontalDragGestures(
                     onDragStart = {
                         start = level
                         travelled = 0f
+                        felt = notchOf(level.toFloat(), 0f..100f, notches)
                     },
                     onDragEnd = onDone,
                     onDragCancel = onDone,
                     onHorizontalDrag = { change, dx ->
                         change.consume()
                         travelled += dx
-                        onDrag(volumeAfterDrag(start, travelled, size.width.toFloat()))
+                        val pct = volumeAfterDrag(start, travelled, size.width.toFloat())
+                        val notch = notchOf(pct.toFloat(), 0f..100f, notches)
+                        notchFeel(felt, notch, notches)?.let(haptics::play)
+                        felt = notch
+                        onDrag(pct)
                     },
                 )
             },

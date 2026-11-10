@@ -1,6 +1,5 @@
 package com.r1control.app.ui.music
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.PlaylistId
 import com.r1control.app.ui.components.NameDialog
 import com.r1control.app.ui.components.R1Icon
+import com.r1control.app.ui.components.tappable
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.theme.Space
@@ -99,7 +99,7 @@ private fun PickerLine(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clickable(role = Role.Button, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .semantics { if (checked) stateDescription = checkedDescription }
             .padding(horizontal = Space.Gutter, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,

@@ -1,7 +1,6 @@
 package com.r1control.app.ui.music
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +39,7 @@ import com.r1control.app.ui.components.ListDrag
 import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.TonalButton
 import com.r1control.app.ui.components.rememberListDrag
+import com.r1control.app.ui.components.tappable
 import com.r1control.app.ui.i18n.EnglishStrings
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.Strings
@@ -153,7 +153,7 @@ private fun Header(line: String, current: Track?, shuffled: Boolean, onClick: ((
     Row(
         Modifier.fillMaxWidth().padding(vertical = Space.Small)
             .clip(RoundedCornerShape(Radius.Row))
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            .then(if (onClick != null) Modifier.tappable(role = Role.Button, onClick = onClick) else Modifier),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Space.Large),
     ) {

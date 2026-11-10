@@ -134,6 +134,8 @@ private fun BandRow(
             onValueChangeFinished = onDone,
             enabled = enabled,
             modifier = Modifier.weight(1f),
+            // A tick per decibel: the band moves in steps of 50 mB, and a tick per step is a buzz.
+            notches = ((range.endInclusive - range.start) / 100f).toInt(),
             description = label,
             valueText = valueText,
         )

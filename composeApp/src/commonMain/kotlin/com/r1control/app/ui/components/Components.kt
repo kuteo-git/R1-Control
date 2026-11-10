@@ -3,7 +3,6 @@ package com.r1control.app.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,8 +34,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -100,7 +101,7 @@ fun IconTap(
             .size(box)
             .clip(CircleShape)
             .background(background)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+            .tappable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         R1Icon(icon, description, tint = if (enabled) tint else disabledTint, size = iconSize)
@@ -156,7 +157,7 @@ fun PrimaryButton(
             .heightIn(min = 48.dp)
             .clip(CircleShape)
             .background(if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(enabled = enabled && !busy, role = Role.Button, onClick = onClick)
+            .tappable(enabled = enabled && !busy, role = Role.Button, onClick = onClick)
             .padding(horizontal = Space.XLarge),
         contentAlignment = Alignment.Center,
     ) {
@@ -190,7 +191,7 @@ fun TonalButton(
             .heightIn(min = 48.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .tappable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = Space.XLarge),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -211,7 +212,7 @@ fun OutlinePill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(CircleShape)
             .border(BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline), CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .padding(horizontal = Space.Large),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -327,7 +328,7 @@ fun ProblemBanner(text: String, modifier: Modifier = Modifier, actionText: Strin
                 modifier = Modifier
                     .heightIn(min = 48.dp)
                     .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onAction)
+                    .tappable(role = Role.Button, onClick = onAction)
                     .wrapContentHeight()
                     .padding(horizontal = Space.Small),
                 style = MaterialTheme.typography.labelLarge,
@@ -393,7 +394,7 @@ fun SettingsRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(role = Role.Button, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .padding(horizontal = Space.Gutter, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -422,7 +423,7 @@ fun SwitchRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) }
+            .tappable(enabled = enabled, role = Role.Switch, feel = if (checked) Haptic.Off else Haptic.On) { onChange(!checked) }
             .padding(horizontal = Space.Gutter, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -438,9 +439,13 @@ fun SwitchRow(
 
 @Composable
 fun R1Switch(checked: Boolean, onChange: (Boolean) -> Unit, enabled: Boolean = true) {
+    val haptics = LocalHaptics.current
     Switch(
         checked = checked,
-        onCheckedChange = onChange,
+        onCheckedChange = {
+            haptics.play(if (it) Haptic.On else Haptic.Off)
+            onChange(it)
+        },
         enabled = enabled,
         colors = SwitchDefaults.colors(
             checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
@@ -526,7 +531,7 @@ fun TextAction(text: String, onClick: () -> Unit) {
         Modifier
             .heightIn(min = 48.dp)
             .clip(CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .padding(horizontal = Space.Medium),
         contentAlignment = Alignment.Center,
     ) {
@@ -567,12 +572,29 @@ fun R1Slider(
     inactive: Color = Tokens.CardRaised,
     description: String = "",
     valueText: String = "",
+    /** The parts the track is felt in while dragged: a tick past each notch, a knock at either end; 0 is not felt. */
+    notches: Int = if (steps > 0) steps + 1 else 0,
 ) {
     val alpha = if (enabled) 1f else 0.5f
+    val haptics = LocalHaptics.current
+    val shown by rememberUpdatedState(value)
+    // The notch last felt in this drag, or -1 between drags: the first move is measured from the value shown.
+    val felt = remember { mutableIntStateOf(-1) }
     androidx.compose.material3.Slider(
         value = value,
-        onValueChange = onValueChange,
-        onValueChangeFinished = onValueChangeFinished,
+        onValueChange = { next ->
+            if (notches > 0) {
+                val from = if (felt.intValue < 0) notchOf(shown, valueRange, notches) else felt.intValue
+                val to = notchOf(next, valueRange, notches)
+                notchFeel(from, to, notches)?.let(haptics::play)
+                felt.intValue = to
+            }
+            onValueChange(next)
+        },
+        onValueChangeFinished = {
+            felt.intValue = -1
+            onValueChangeFinished?.invoke()
+        },
         valueRange = valueRange,
         steps = steps,
         enabled = enabled,

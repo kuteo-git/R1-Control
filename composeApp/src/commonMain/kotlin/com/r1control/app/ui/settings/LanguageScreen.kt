@@ -1,7 +1,6 @@
 package com.r1control.app.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.LanguageChoice
 import com.r1control.app.ui.AppViewModel
 import com.r1control.app.ui.components.R1Icon
+import com.r1control.app.ui.components.tappable
 import com.r1control.app.ui.i18n.EnglishStrings
 import com.r1control.app.ui.i18n.Language
 import com.r1control.app.ui.i18n.LocalStrings
@@ -73,7 +73,7 @@ private fun ChoiceRow(title: String, subtitle: String, selected: Boolean, onClic
         Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(role = Role.RadioButton, onClick = onClick)
+            .tappable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(horizontal = Space.Gutter, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,

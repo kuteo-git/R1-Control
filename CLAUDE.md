@@ -91,7 +91,7 @@ owner is in Vietnamese.
 |---|---|---|
 | Unit | `commonTest` | pure decisions, use cases against fakes |
 | Wire | `jvmTest` | mappers over `docs/fixtures`; requests through Ktor `MockEngine` |
-| Guard | `jvmTest` | source scans (`ArchitectureGuardTest`, `UntranslatedGuardTest`); `jvmTest` declares `src` as an input so a guard actually reruns |
+| Guard | `jvmTest` | source scans (`ArchitectureGuardTest`, `UntranslatedGuardTest`, `HapticGuardTest`); `jvmTest` declares `src` as an input so a guard actually reruns |
 
 View models are plain classes that take a `CoroutineScope` (the activity's
 `viewModelScope` for the tabs, one `rememberCoroutineScope` per settings page)
@@ -239,3 +239,11 @@ under `/Volumes/Data2/dev/`. Android allows cleartext HTTP to any host
   no Loading frame, and refresh behind it. The voice list is remembered by
   `VoiceCache` (the one owner, warmed from the first snapshot that names a voice
   server). A page that writes tells the feed to read again.
+- **Every touch is felt, through one seam.** `Haptic` names the six sensations
+  (Tap, On, Off, Tick, Knock, Lift); `LocalHaptics` carries the one
+  `rememberPlatformHaptics()` from `App` (`View.performHapticFeedback` on
+  Android, Apple's generators prepared once on iOS). Presses go through
+  `tappable`, switches through `R1Switch`, sliders through `R1Slider`
+  (`HapticGuardTest`). A value is felt by notch (`notchFeel`): a tick past
+  one, a knock at either end, one tick however far a fast finger jumped. The
+  volume's notches are the speaker's own steps; the seek bar is not felt.

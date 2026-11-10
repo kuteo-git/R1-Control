@@ -1,7 +1,6 @@
 package com.r1control.app.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import com.r1control.app.ui.components.tappable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.BluetoothDevice
@@ -192,7 +192,7 @@ internal fun DeviceHeader(device: BluetoothDevice) {
 @Composable
 internal fun QuietAction(text: String, onClick: () -> Unit) {
     Box(
-        Modifier.heightIn(min = 48.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClick).padding(horizontal = Space.Large),
+        Modifier.heightIn(min = 48.dp).clip(CircleShape).tappable(role = Role.Button, onClick = onClick).padding(horizontal = Space.Large),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)

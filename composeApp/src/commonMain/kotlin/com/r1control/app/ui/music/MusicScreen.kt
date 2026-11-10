@@ -1,7 +1,6 @@
 package com.r1control.app.ui.music
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import com.r1control.app.ui.components.tappable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.ListRef
@@ -279,7 +279,7 @@ private fun PlaylistCard(playlist: Playlist, strings: Strings, onClick: () -> Un
         Modifier
             .width(CardSize)
             .clip(RoundedCornerShape(Radius.Row))
-            .clickable(role = Role.Button, onClick = onClick),
+            .tappable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(Space.Hair),
     ) {
         Cover(playlist.coverUrl, CardSize, radius = Radius.Row)
@@ -300,7 +300,7 @@ private fun NewPlaylistCard(text: String, onClick: () -> Unit) {
         Modifier
             .width(CardSize)
             .clip(RoundedCornerShape(Radius.Row))
-            .clickable(role = Role.Button, onClick = onClick),
+            .tappable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(Space.Hair),
     ) {
         Box(
@@ -334,7 +334,7 @@ private fun LazyListScope.idleItems(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .clickable(role = Role.Button) { actions.onRecent(recent) },
+                .tappable(role = Role.Button) { actions.onRecent(recent) },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             R1Icon(R1Icons.Search, null, tint = Tokens.OnGroundMuted, size = 22.dp)
@@ -442,7 +442,7 @@ fun MiniPlayer(state: MiniState.Showing, onOpen: () -> Unit, onToggle: () -> Uni
         modifier = modifier
             .fillMaxWidth()
             .background(Tokens.Card)
-            .clickable(role = Role.Button, onClickLabel = strings.openControl, onClick = onOpen)
+            .tappable(role = Role.Button, onClickLabel = strings.openControl, onClick = onOpen)
             .padding(horizontal = Space.Medium, vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {

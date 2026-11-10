@@ -1,7 +1,6 @@
 package com.r1control.app.ui.music
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +40,7 @@ import com.r1control.app.ui.Page
 import com.r1control.app.ui.components.Cover
 import com.r1control.app.ui.components.NameDialog
 import com.r1control.app.ui.components.R1Icon
+import com.r1control.app.ui.components.tappable
 import com.r1control.app.ui.i18n.EnglishStrings
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.Strings
@@ -117,7 +117,7 @@ private fun Line(cover: String?, glyph: androidx.compose.ui.graphics.vector.Imag
             .fillMaxWidth()
             .heightIn(min = 72.dp)
             .clip(RoundedCornerShape(Radius.Row))
-            .clickable(role = Role.Button, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .padding(vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -1,7 +1,6 @@
 package com.r1control.app.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +44,9 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import com.r1control.app.ui.components.Haptic
+import com.r1control.app.ui.components.LocalHaptics
+import com.r1control.app.ui.components.tappable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.NewsCategory
@@ -211,7 +213,11 @@ private fun Stepper(text: String, label: String, onUp: () -> Unit, onDown: () ->
  */
 @Composable
 private fun RepeatingTap(icon: ImageVector, description: String, onStep: () -> Unit, enabled: Boolean) {
-    val step by rememberUpdatedState(onStep)
+    val haptics = LocalHaptics.current
+    val step by rememberUpdatedState({
+        haptics.play(Haptic.Tick)
+        onStep()
+    })
     val tint = if (enabled) Tokens.OnGround else Tokens.OnGround.copy(alpha = 0.38f)
     Box(
         Modifier
@@ -257,7 +263,7 @@ private fun VoicePicker(current: String, voices: List<String>, onVoice: (String)
     var open by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.Row)).background(Tokens.Card)) {
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(enabled = enabled, role = Role.DropdownList) { open = !open }.padding(horizontal = Space.Large),
+            Modifier.fillMaxWidth().heightIn(min = 56.dp).tappable(enabled = enabled, role = Role.DropdownList) { open = !open }.padding(horizontal = Space.Large),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(current, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
