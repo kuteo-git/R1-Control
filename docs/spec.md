@@ -88,8 +88,10 @@ Settings.
    the same way, as in mytube's cast queue: a handle at the start of a row drags it (the list
    scrolls under a row held near an edge), an X at the end removes it (disabled at the last song),
    and a row's add button puts it into a playlist. A song is in a list once: adding one that is
-   already there does nothing. Edits are shown at once and **sent to the speaker only at Next**:
-   the song playing is never interrupted. Next re-sends the edited list from the next song
+   already there does nothing. Edits are shown at once and sent to the speaker as **what follows
+   the song playing** (`/api/media/queue`), which it takes when that song ends: the song playing is
+   never interrupted, and a removed song is not played when the one before it ends on its own. An R1
+   built before that call refuses it quietly. Next re-sends the edited list from the next song
    (`/api/media/play`) when the speaker's own queue would go somewhere else, and uses the speaker's
    `/api/media/next` when it would already go the right way; the app's one Next, `MusicStore.next`,
    is what both cards press.

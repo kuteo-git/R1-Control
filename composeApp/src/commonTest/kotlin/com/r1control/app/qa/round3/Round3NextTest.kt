@@ -219,7 +219,7 @@ class Round3NextTest {
         assertTrue(rig.speaker.calls.none { it == "next" })
     }
 
-    /** R3-07. Nothing reaches the speaker on an edit; an edit before the playing song keeps the speaker's own next. */
+    /** R3-07. An edit before the playing song leaves what follows as sent: nothing reaches the speaker, and Next is its own. */
     @Test fun anEditBeforeThePlayingSongSendsNothingAndNextIsTheSpeakers() = runTest {
         val rig = rig()
         val ref = ListRef.Saved(rig.store.made("L", songs("a", "b", "c", "d")))

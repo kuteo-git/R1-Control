@@ -5,6 +5,7 @@ import com.r1control.app.data.remote.R1Json
 import com.r1control.app.data.remote.dto.AckDto
 import com.r1control.app.data.remote.dto.BtStateDto
 import com.r1control.app.data.remote.dto.MediaStateDto
+import com.r1control.app.data.remote.dto.QueueBodyDto
 import com.r1control.app.data.remote.dto.NewsCategorySaveDto
 import com.r1control.app.data.remote.dto.NewsSaveDto
 import com.r1control.app.data.remote.dto.PlayBodyDto
@@ -92,6 +93,11 @@ class HttpSpeakerRepository(
             ),
         )
         write("play", path = "/api/media/play", body = body)
+    }
+
+    override suspend fun queue(tracks: List<Track>) {
+        val body = R1Json.encodeToString(QueueBodyDto(tracks.map { PlayItemDto(it.id, it.title, it.artist, it.duration, it.thumbnailUrl) }))
+        write("queue", path = "/api/media/queue", body = body)
     }
 
     override suspend fun search(keyword: String): List<Track> {

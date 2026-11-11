@@ -3,6 +3,7 @@ package com.r1control.app.domain.usecase
 import com.r1control.app.domain.model.ListEdit
 import com.r1control.app.domain.model.ListRef
 import com.r1control.app.domain.model.MediaState
+import com.r1control.app.domain.model.MediaStatus
 import com.r1control.app.domain.model.NextMove
 import com.r1control.app.domain.model.PlayOrder
 import com.r1control.app.domain.model.PlayRequest
@@ -17,6 +18,7 @@ import com.r1control.app.domain.model.cleanPlaylistName
 import com.r1control.app.domain.model.nextMove
 import com.r1control.app.domain.model.playSequence
 import com.r1control.app.domain.model.queueAround
+import com.r1control.app.domain.model.upcomingAfter
 import com.r1control.app.domain.repository.PreferencesRepository
 import com.r1control.app.domain.repository.SpeakerRepository
 import kotlinx.coroutines.CancellationException
@@ -184,12 +186,15 @@ class MusicStore(
 
     /**
      * Applies [edit] to [ref]'s songs. A playlist edit is saved, a results edit
-     * is not (results are never stored). Nothing is sent to the speaker: the
-     * edit reaches it at the next Next, so the song playing is never interrupted.
+     * is not (results are never stored). An edit to the list playing is sent to
+     * the speaker as what follows the current song ([sendUpcoming]), which it
+     * takes when that song ends: the song playing is never interrupted, and a
+     * removed song is not played when it ends on its own.
      * An edit that changes nothing ([SongList.edited] returned the same
      * instance) changes nothing at all.
      */
     fun edit(ref: ListRef, edit: ListEdit) {
+        val before = lists.value
         lists.update { held ->
             if (ref is ListRef.Results && ref.serial !in held.results) return@update held
             val songs = held.songs(ref)
@@ -200,6 +205,8 @@ class MusicStore(
                 is ListRef.Saved -> held.withPlaylist(ref.id) { it.copy(songs = edited) }
             }
         }
+        val after = lists.value
+        if (after !== before && (after.playing as? Playing.FromList)?.ref == ref) scope.launch { sendUpcoming() }
     }
 
     // Playlists.
@@ -330,6 +337,25 @@ class MusicStore(
         outcome
     }
 
+    /**
+     * Tells the speaker what now follows the song playing. The list is read under the lock, so
+     * a burst of edits sends what they add up to, and the last one sent is the latest. Nothing is
+     * sent when it is what the speaker was last told ([Playing.FromList.sentIds], not its reading,
+     * which shows an edit only once the song has ended). A refusal (an R1 built before
+     * `/api/media/queue`) is left silent: Next still re-sends the edited list.
+     */
+    private suspend fun sendUpcoming() = sending.withLock {
+        val held = lists.value
+        val pointer = held.playing as? Playing.FromList ?: return@withLock
+        val media = mediaOf(feed.view.value) ?: return@withLock
+        if (media.status !in SOUNDING) return@withLock
+        val upcoming = upcomingAfter(pointer, held.songs(pointer.ref), media.videoId) ?: return@withLock
+        val through = pointer.sentIds.take(pointer.sentIds.indexOf(media.videoId) + 1)
+        if (pointer.sentIds.drop(through.size) == upcoming.map { it.id }) return@withLock
+        if (command { speaker.queue(upcoming) } !is CommandOutcome.Done) return@withLock
+        lists.update { it.sentFrom(pointer.ref, pointer.order, through + upcoming.map { track -> track.id }) }
+    }
+
     private suspend fun settle(outcome: CommandOutcome) {
         if (outcome !is CommandOutcome.Done) return
         val before = feed.answers.value
@@ -395,5 +421,8 @@ class MusicStore(
 
     private companion object {
         const val SETTLE_MILLIS = 1_000L
+
+        /** A song is loaded on the speaker, so it has a list to walk when the song ends. */
+        val SOUNDING = setOf(MediaStatus.Downloading, MediaStatus.Playing, MediaStatus.Paused)
     }
 }

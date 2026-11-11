@@ -11,11 +11,13 @@ import com.r1control.app.domain.model.nextMove
 import com.r1control.app.domain.model.playSequence
 import com.r1control.app.domain.model.playsFrom
 import com.r1control.app.domain.model.queueAround
+import com.r1control.app.domain.model.upcomingAfter
 import com.r1control.app.testing.media
 import com.r1control.app.testing.track
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Every row of the Next table: what a press does for the list as it is now and the speaker as it reads. */
@@ -161,5 +163,35 @@ class NextMoveTest {
         assertFalse(playsFrom(pointer, ref, reading("v1", "v1", "v2")), "a song asked for by voice")
         assertFalse(playsFrom(pointer, ListRef.Results(2), reading("a", "a", "b")), "another list")
         assertFalse(playsFrom(Playing.None, ref, reading("a", "a", "b")), "nothing sent")
+    }
+
+    // What the speaker is told follows the song playing.
+
+    private fun upcoming(playing: Playing, songs: SongList, current: String) = upcomingAfter(playing, songs, current)?.map { it.id }
+
+    @Test fun upcomingIsTheRestOfTheListAfterTheSongPlaying() {
+        assertEquals(listOf("c", "d"), upcoming(from("a", "b", "c", "d"), list("a", "b", "c", "d"), "b"))
+        assertEquals(listOf("c", "d"), upcoming(from("a", "b", "c", "d"), list("a", "c", "d"), "a"), "b removed")
+        assertEquals(emptyList(), upcoming(from("a", "b"), list("a", "b"), "b"), "the last song: nothing after it")
+    }
+
+    @Test fun upcomingFollowsTheShuffleTheListPlaysIn() {
+        val shuffled = PlayOrder.Shuffled(listOf("c", "a", "d", "b"))
+        assertEquals(listOf("d", "b"), upcoming(from("c", "a", "d", "b", order = shuffled), list("a", "b", "c", "d"), "a"))
+    }
+
+    @Test fun upcomingAfterARemovedSongPlayingStartsWhereItWas() {
+        assertEquals(listOf("c"), upcoming(from("a", "b", "c"), list("a", "c"), "b"))
+    }
+
+    @Test fun upcomingIsOnlyForTheAppsOwnList() {
+        assertNull(upcoming(Playing.None, list("a", "b"), "a"))
+        assertNull(upcoming(from("a", "b"), list("a", "b", "x"), "x"), "a song the phone did not send")
+    }
+
+    @Test fun upcomingIsAtMostAQueuesWorthAfterTheSongPlaying() {
+        val ids = List(40) { "s$it" }
+        val result = upcoming(from(*ids.take(30).toTypedArray()), SongList.of(ids.map { track(it) }), "s0")
+        assertEquals(ids.drop(1).take(29), result)
     }
 }

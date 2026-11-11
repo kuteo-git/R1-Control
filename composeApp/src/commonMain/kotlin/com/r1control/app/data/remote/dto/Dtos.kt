@@ -114,6 +114,10 @@ data class PlayBodyDto(
     @SerialName("start_index") val startIndex: Int,
 )
 
+/** `/api/media/queue`: what plays after the current song, in the same item shape as a play. */
+@Serializable
+data class QueueBodyDto(val items: List<PlayItemDto>)
+
 /** What `/api/media/play` reads back: all five keys, empty rather than absent. */
 @Serializable
 data class PlayItemDto(

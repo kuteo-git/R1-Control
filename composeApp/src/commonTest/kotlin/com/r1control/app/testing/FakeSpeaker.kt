@@ -62,6 +62,7 @@ open class FakeSpeaker : StubSpeaker() {
     override suspend fun stop() = command("stop")
     override suspend fun seek(positionS: Int) = command("seek $positionS")
     override suspend fun play(tracks: List<Track>, startIndex: Int) = command("play ${tracks.map { it.id }} from $startIndex")
+    override suspend fun queue(tracks: List<Track>) = command("queue ${tracks.map { it.id }}")
     override suspend fun say(text: String) = command("say $text")
     override suspend fun setLoudness(mb: Int) = command("loudness $mb")
     override suspend fun setEqEnabled(enabled: Boolean) = command("eq $enabled")

@@ -258,19 +258,49 @@ class MusicStoreTest {
         rig.reading(MediaStatus.Playing, "a", "a", "b", "c")
         runCurrent()
         rig.store.next()
-        assertEquals(listOf("play [a, c] from 1"), rig.speaker.calls)
+        // The edit was sent as what follows; the reading still shows the old queue, so Next re-sends, which is always right.
+        assertEquals(listOf("queue [c]", "play [a, c] from 1"), rig.speaker.calls)
         assertEquals(listOf("a", "c"), assertIs<Playing.FromList>(rig.lists.playing).sentIds, "the window sent is what the speaker now holds")
     }
 
-    @Test fun anEditIsNeverSentUntilNextIsPressed() = runTest {
+    @Test fun anEditIsSentAsWhatFollowsAndNeverInterruptsTheSongPlaying() = runTest {
         val rig = rig()
         val id = rig.store.made("L", songs("a", "b", "c"))
         rig.store.play(ListRef.Saved(id), 0)
+        rig.reading(MediaStatus.Playing, "a", "a", "b", "c")
+        runCurrent()
         rig.speaker.calls.clear()
         rig.store.edit(ListRef.Saved(id), ListEdit.Move(2, 1))
         rig.store.edit(ListRef.Saved(id), ListEdit.Remove("b"))
         runCurrent()
-        assertTrue(rig.speaker.calls.isEmpty(), "the song playing is never interrupted: ${rig.speaker.calls}")
+        assertEquals(listOf("queue [c]"), rig.speaker.calls, "what the two edits add up to, once; never a play, next or stop")
+    }
+
+    @Test fun anEditThatLeavesWhatFollowsAsSentSendsNothing() = runTest {
+        val rig = rig()
+        val id = rig.store.made("L", songs("a", "b", "c"))
+        rig.store.play(ListRef.Saved(id), 0)
+        rig.reading(MediaStatus.Playing, "b", "a", "b", "c")
+        runCurrent()
+        rig.speaker.calls.clear()
+        rig.store.edit(ListRef.Saved(id), ListEdit.Remove("a"))
+        runCurrent()
+        assertTrue(rig.speaker.calls.isEmpty(), "a played song removed changes nothing ahead: ${rig.speaker.calls}")
+    }
+
+    /** The reading shows an edit only after the song ends; an edit undone meanwhile must still be sent. */
+    @Test fun anEditUndoneBeforeTheSongEndsIsSentBack() = runTest {
+        val rig = rig()
+        val id = rig.store.made("L", songs("a", "b", "c"))
+        rig.store.play(ListRef.Saved(id), 0)
+        rig.reading(MediaStatus.Playing, "a", "a", "b", "c")
+        runCurrent()
+        rig.speaker.calls.clear()
+        rig.store.edit(ListRef.Saved(id), ListEdit.Remove("b"))
+        runCurrent()
+        rig.store.edit(ListRef.Saved(id), ListEdit.Add(songs("b")))
+        runCurrent()
+        assertEquals(listOf("queue [c]", "queue [c, b]"), rig.speaker.calls)
     }
 
     @Test fun nextOverNothingSendsNothing() = runTest {

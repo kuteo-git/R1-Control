@@ -31,6 +31,13 @@ interface SpeakerRepository {
     suspend fun seek(positionS: Int)
 
     suspend fun play(tracks: List<Track>, startIndex: Int)
+
+    /**
+     * Replaces what the speaker plays after the current song with [tracks], without cutting the
+     * current song off; it takes them when this song ends. An R1 built before the call answers
+     * 404 ([SpeakerException.Refused]).
+     */
+    suspend fun queue(tracks: List<Track>)
     suspend fun search(keyword: String): List<Track>
     suspend fun say(text: String)
 

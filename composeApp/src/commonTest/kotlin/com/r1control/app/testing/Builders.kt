@@ -79,6 +79,7 @@ open class StubSpeaker : SpeakerRepository {
     override suspend fun stop(): Unit = unused()
     override suspend fun seek(positionS: Int): Unit = unused()
     override suspend fun play(tracks: List<Track>, startIndex: Int): Unit = unused()
+    override suspend fun queue(tracks: List<Track>): Unit = unused()
     override suspend fun search(keyword: String): List<Track> = unused()
     override suspend fun say(text: String): Unit = unused()
     override suspend fun setLoudness(mb: Int): Unit = unused()

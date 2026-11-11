@@ -87,13 +87,8 @@ fun nextMove(playing: Playing, songs: SongList, media: MediaState): NextMove {
     // No app list, or the speaker has moved on to a song the phone did not send
     // (a voice request, or the server continuing with related songs): the speaker's own.
     val speakerFallback = if (media.hasNext) NextMove.Speaker else NextMove.None
-    if (playing !is Playing.FromList) return speakerFallback
     val current = media.videoId
-    if (current !in playing.sentIds) return speakerFallback
-
-    val sequence = playSequence(songs, playing.order)
-    val at = sequence.indexOfFirst { it.id == current }
-    val anchor = if (at >= 0) at + 1 else placeOfRemoved(current, playing.sentIds, sequence)
+    val (sequence, anchor) = placeAfter(playing, songs, current) ?: return speakerFallback
     val rest = sequence.drop(anchor)
     if (rest.isEmpty()) return NextMove.None
 
@@ -105,6 +100,23 @@ fun nextMove(playing: Playing, songs: SongList, media: MediaState): NextMove {
     if (speakerRest.isNotEmpty() && rest.map { it.id }.take(speakerRest.size) == speakerRest) return NextMove.Speaker
 
     return NextMove.Resend(queueAround(sequence, anchor))
+}
+
+/**
+ * What follows the song playing, [current], in [playing]'s list as it is now: what the
+ * speaker should walk to when this song ends, at most a queue's worth. Null when the
+ * phone's list is not what plays: no app list, or the speaker moved on to a song the phone
+ * did not send. [nextMove] goes to its first song.
+ */
+fun upcomingAfter(playing: Playing, songs: SongList, current: String): List<Track>? =
+    placeAfter(playing, songs, current)?.let { (sequence, anchor) -> sequence.drop(anchor).take(PLAY_QUEUE_MAX - 1) }
+
+/** [playing]'s list in play order, and where in it the song after [current] is. */
+private fun placeAfter(playing: Playing, songs: SongList, current: String): Pair<List<Track>, Int>? {
+    if (playing !is Playing.FromList || current !in playing.sentIds) return null
+    val sequence = playSequence(songs, playing.order)
+    val at = sequence.indexOfFirst { it.id == current }
+    return sequence to if (at >= 0) at + 1 else placeOfRemoved(current, playing.sentIds, sequence)
 }
 
 /**

@@ -67,6 +67,24 @@ class HttpSpeakerRepositoryTest {
         assertTrue(bytes.size > text.length, "the accents are multi-byte")
     }
 
+    @Test fun queueSendsWhatFollowsAsUtf8JsonItems() = runTest {
+        repo().queue(vietnamese)
+        val request = requests.single()
+        assertEquals(HttpMethod.Post, request.method)
+        assertEquals("/api/media/queue", request.url.encodedPath)
+        val body = assertIs<OutgoingContent.ByteArrayContent>(request.body)
+        assertEquals("application/json; charset=utf-8", body.contentType.toString())
+        val text = body.bytes().decodeToString()
+        assertTrue(text.startsWith("{\"items\":[{\"video_id\":\"qkXf2c5mlA8\""), text)
+        assertTrue("Thành Tâm Sám Hối" in text && "start_index" !in text, text)
+    }
+
+    /** An R1 built before the call answers NanoHTTPD's plain 404. */
+    @Test fun queueOnAnOlderSpeakerIsRefused() = runTest {
+        val failure = runCatching { repo { HttpStatusCode.NotFound to "404" }.queue(vietnamese) }.exceptionOrNull()
+        assertIs<SpeakerException>(failure, "$failure")
+    }
+
     @Test fun newsSaveUsesTheSameCharsetBecauseItCarriesAVietnameseVoiceName() = runTest {
         repo().saveNews(NewsSettings(true, "09:15", "Thiền Tâm Đức", listOf(NewsCategory("tech", true), NewsCategory("power", false))))
         val body = assertIs<OutgoingContent.ByteArrayContent>(requests.single().body)

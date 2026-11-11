@@ -215,8 +215,11 @@ under `/Volumes/Data2/dev/`. Android allows cleartext HTTP to any host
   a refused permission fails exactly like being off the wifi, and first run
   checks again when the app comes back to the front.
 - **A list's songs have one owner (`MusicStore`); the playing list is a pointer
-  into it, never a copy.** An edit is told to the speaker only at Next, so the
-  song playing is never cut. One Next (`MusicStore.next` over `nextMove`);
+  into it, never a copy.** An edit to the playing list is sent as what follows
+  the current song (`upcomingAfter`, `/api/media/queue`; the server takes it at
+  the song's end), so the song playing is never cut and a removed song is not
+  walked to when a song ends on its own. Before 2026-11-11 edits waited for
+  Next, and the speaker played deleted songs. One Next (`MusicStore.next` over `nextMove`);
   `OneNextGuardTest` fails on a second caller of `SpeakerRepository.next`.
 - **What the speaker plays now is read from the reading, never from what was
   last sent** (`playsFrom`, `nextMove`); a pointer is re-checked when its send
