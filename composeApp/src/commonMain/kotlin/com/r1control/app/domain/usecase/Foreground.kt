@@ -5,11 +5,16 @@ import com.r1control.app.domain.model.SpeakerSettings
 import com.r1control.app.domain.model.SpeakerSnapshot
 import com.r1control.app.domain.repository.SpeakerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 
 /** Whether the app is on screen. The platform's lifecycle writes it, through the app shell. */
 class Foreground {
     private val shown = MutableStateFlow(true)
+
+    /** The same fact as a flow, for what must act when it changes rather than wait for it (the Home Assistant link). */
+    val isShown: StateFlow<Boolean> = shown.asStateFlow()
 
     fun set(isShown: Boolean) {
         shown.value = isShown

@@ -1,0 +1,2555 @@
+{
+  "title": "Home",
+  "views": [
+    {
+      "title": "Thiết Bị",
+      "path": "all",
+      "type": "masonry",
+      "badges": [],
+      "cards": [
+        {
+          "type": "custom:mushroom-template-card",
+          "primary": "{% set days = ['Chủ Nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'] %}\n{% set day_name = days[now().weekday() + 1] if now().weekday() < 6 else days[0] %}\nNgày {{ now().day }} tháng {{ now().month }} ─  {{states.sensor.lunar_today.state}}",
+          "entity": "sensor.lunar_today",
+          "tap_action": {
+            "action": "none"
+          },
+          "hold_action": {
+            "action": "none"
+          },
+          "double_tap_action": {
+            "action": "none"
+          }
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Nhiệt độ"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "sensor.bal_temperature",
+                  "icon_color": "green",
+                  "name": "Ngoài",
+                  "icon": "mdi:coolant-temperature"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "sensor.temperature",
+                  "icon_color": "purple",
+                  "name": "Trong",
+                  "icon": "mdi:coolant-temperature"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "sensor.mom_bed_temp_temperature",
+                  "icon_color": "indigo",
+                  "icon": "mdi:coolant-temperature",
+                  "name": "Mom"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Quạt của mẹ"
+            },
+            {
+              "type": "entities",
+              "entities": [
+                {
+                  "entity": "fan.bam_vao_day_de_chinh_toc_do"
+                }
+              ],
+              "state_color": true,
+              "show_header_toggle": false
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Phòng khách"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.liv_light_1",
+                  "icon_color": "red",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn trong",
+                  "icon": "mdi:lightbulb"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.liv_light_2",
+                  "icon_color": "red",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn ngủ trong",
+                  "icon": "mdi:lightbulb"
+                }
+              ]
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.kit_light_2",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "cyan",
+                  "name": "Đèn ngoài",
+                  "icon": "mdi:lightbulb"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.switch_mom_kit_fan",
+                  "icon_color": "red",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon": "mdi:lightbulb",
+                  "name": "Quạt ngoài"
+                }
+              ]
+            },
+            {
+              "type": "heading",
+              "icon": "",
+              "heading": "❄️ Điều khiển máy lạnh",
+              "heading_style": "title"
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_off",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Tắt",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_off",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_off_2hrs",
+                  "name": "Tắt — 2hr",
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_off_in_1hr_at_26",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "1Hr",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_off_in_1hr_at_26",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name",
+                  "icon": "mdi:air-conditioner"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_powerful",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Pwd",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_powerful",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name",
+                  "icon": "mdi:air-filter"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_18",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "18℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_18",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_19",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "19℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_19",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_20",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "20℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_20",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_21",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "21℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_21",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_22",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "22℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_22",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_23",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "23℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_23",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_24",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "24℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_24",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_25",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "25℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_25",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_26",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "26℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_26",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_27",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "27℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_27",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_28",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "28℃",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_28",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_29",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "29℃",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_29",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_turn_on_30",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "30℃",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_30",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.daikin_fan_silent",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Fan",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.daikin_turn_on_dry",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name",
+                  "icon": "mdi:fan-off"
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "user",
+              "users": [
+                "3ef561bf87834cf8a0432f978bae4cb5",
+                "771410cb873d4582800fb7a3dbb83306",
+                "65ac79e40ac64e148c368dcd9ccaa491"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Phòng Lượm"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-light-card",
+                  "entity": "light.luom",
+                  "icon": "mdi:lightbulb",
+                  "use_light_color": false,
+                  "show_brightness_control": false,
+                  "show_color_temp_control": false,
+                  "show_color_control": false,
+                  "collapsible_controls": false,
+                  "fill_container": false,
+                  "name": "Đèn"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.bed_plug_fan",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "green",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "icon": "mdi:fan",
+                  "name": "Máy quạt"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            },
+            {
+              "type": "heading",
+              "icon": "",
+              "heading": "❄️ Điều khiển máy lạnh",
+              "heading_style": "title"
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_off",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Tắt",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_off",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_off_in_1hr",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "26℃ 1hr",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_off_in_1hr",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name",
+                  "icon": "mdi:air-conditioner"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_on_25",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "25℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_on_25",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_on_26",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "26℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_on_26",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_on_27",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "27℃ ",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_on_27",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.aqua_turn_on_28",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "28℃",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_on_28",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.bedair28in1hr",
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "28℃ 2hr",
+                  "icon_color": "red",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.aqua_turn_on_28_off_in_1hr",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "use_entity_picture": true,
+                  "content_info": "name"
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "user",
+              "users": [
+                "3ef561bf87834cf8a0432f978bae4cb5",
+                "65ac79e40ac64e148c368dcd9ccaa491",
+                "191ddab6b4824f8bb3da4087cf4f7681",
+                "771410cb873d4582800fb7a3dbb83306"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title": "Nhà bếp"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.kit_light_1",
+                  "icon_color": "cyan",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn trong",
+                  "icon": "mdi:lightbulb"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.kit_bal_plug_center",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "cyan",
+                  "name": "Đèn ngoài",
+                  "icon": "mdi:lightbulb"
+                }
+              ]
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "orange",
+                  "icon": "mdi:lightbulb",
+                  "entity": "switch.kit_balcony_plug",
+                  "name": "Đèn chuồn chó"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.kit_bal_plug_washdishes",
+                  "icon_color": "cyan",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn rửa chén",
+                  "icon": "mdi:lightbulb"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title": "Nhà trên"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.sonoff_1001686e2b_1",
+                  "icon_color": "purple",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn trong",
+                  "icon": "mdi:lightbulb"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.sonoff_1001686e2b_2",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "purple",
+                  "name": "Đèn ngoài",
+                  "icon": "mdi:lightbulb"
+                }
+              ]
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.sonoff_1001714080_2",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "green",
+                  "icon": "mdi:lightbulb",
+                  "name": "Đèn phòng trong"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.sonoff_1001714080_1",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "green",
+                  "icon": "mdi:lamps-outline",
+                  "name": "Đèn ngủ"
+                }
+              ]
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "hold_action": {
+                        "action": "none"
+                      },
+                      "double_tap_action": {
+                        "action": "none"
+                      },
+                      "icon_color": "lime",
+                      "icon": "mdi:lightbulb",
+                      "entity": "switch.bal_light_right",
+                      "name": "Đèn bang công trái"
+                    }
+                  ]
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "hold_action": {
+                        "action": "none"
+                      },
+                      "double_tap_action": {
+                        "action": "none"
+                      },
+                      "icon_color": "amber",
+                      "icon": "mdi:lightbulb",
+                      "entity": "switch.0x70b3d52b60044fee",
+                      "name": "Đèn bang công phải"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "amber",
+                  "icon": "mdi:lightbulb",
+                  "entity": "switch.liv_bal_plug_center",
+                  "name": "Đèn ngoài sân"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title": "Toilet"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.shower_toilet_top",
+                  "icon_color": "cyan",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "name": "Đèn nhà tắm",
+                  "icon": "mdi:lightbulb"
+                },
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "entity": "switch.shower_toilet_bottom",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "cyan",
+                  "name": "Đèn nhà cầu",
+                  "icon": "mdi:lightbulb"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-entity-card",
+              "double_tap_action": {
+                "action": "none"
+              },
+              "icon_color": "orange",
+              "icon": "mdi:lightbulb",
+              "entity": "light.mom_toilet_light",
+              "name": "Đèn toilet phòng mẹ",
+              "tap_action": {
+                "action": "toggle"
+              }
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title": "Khác"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "custom:mushroom-entity-card",
+                  "hold_action": {
+                    "action": "none"
+                  },
+                  "double_tap_action": {
+                    "action": "none"
+                  },
+                  "icon_color": "orange",
+                  "icon": "mdi:lightbulb",
+                  "entity": "switch.plug_light_storage_room_2",
+                  "name": "Đèn nhà kho"
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            }
+          ]
+        }
+      ],
+      "background": {
+        "opacity": 100,
+        "alignment": "center",
+        "size": "cover",
+        "repeat": "repeat",
+        "attachment": "fixed"
+      },
+      "theme": "Mushroom"
+    },
+    {
+      "icon": "",
+      "type": "masonry",
+      "badges": [],
+      "cards": [
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Kitchen Media Player"
+            },
+            {
+              "type": "media-control",
+              "entity": "media_player.kitchen_audio"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.kitchen_audio_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_next_song",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.kitchen_audio"
+                      }
+                    },
+                    "primary": "Tiếp"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.kitchen_audio_pytube",
+                      "state": "paused"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_resume",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.kitchen_audio"
+                      }
+                    },
+                    "primary": "Phát",
+                    "features_position": "bottom"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.kitchen_audio_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_pause",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.kitchen_audio"
+                      }
+                    },
+                    "primary": "Dừng"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.kitchen_audio_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_shuffle_toggle",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.kitchen_audio"
+                      }
+                    },
+                    "primary": "{% if state_attr('media_player.kitchen_audio_pytube', 'shuffle') %}\n  Trộn: Bật\n{% else %}\n  Trộn: Tắt\n{% endif %}\n"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.kitchen_audio_pytube",
+                      "state": "buffering"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "primary": "Đang tải... {{ state_attr('media_player.kitchen_audio_pytube', 'download_percentage') | default(0) }}%"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_bolero",
+                  "name": "🧑‍🍳 BOLERO",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.kit_play_bolero",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_tan_co",
+                  "name": "🧑‍🍳 TÂN CỔ",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.kit_play_tan_co",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_random",
+                  "name": "🧑‍🍳 Random",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.kit_play_random",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_xuan",
+                  "name": "🧑‍🍳 Xuan",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.kit_play_xuan",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_cailuong",
+                  "name": "Cai Luong",
+                  "icon": "mdi:account-music",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.kit_play_cailuong",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "double_tap_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "use_entity_picture": false,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.kit_play_mix",
+                  "name": "Bolero & TanCo",
+                  "icon": "mdi:account-music",
+                  "tap_action": {
+                    "action": "perform-action",
+                    "target": {},
+                    "perform_action": "script.kit_play_bolero_and_tanco"
+                  },
+                  "hold_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "double_tap_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "use_entity_picture": false,
+                  "content_info": "name"
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "heading",
+                  "icon": "",
+                  "heading": "💿 Phát nhạc từ playlist",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "input_text.playlist_tmp"
+                    }
+                  ],
+                  "alignment": "center"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "script.kit_play_tmp",
+                      "name": "Phát nhạc",
+                      "content_info": "name",
+                      "icon_color": "red",
+                      "use_entity_picture": false,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.kit_play_tmp",
+                        "target": {}
+                      },
+                      "icon": "mdi:play"
+                    }
+                  ],
+                  "alignment": "center"
+                }
+              ]
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "user",
+              "users": [
+                "3ef561bf87834cf8a0432f978bae4cb5"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Mom Media Player"
+            },
+            {
+              "type": "media-control",
+              "entity": "media_player.googlehome9050",
+              "theme": "waves"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.googlehome9050_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_next_song",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.googlehome9050"
+                      }
+                    },
+                    "primary": "Tiếp"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.googlehome9050_pytube",
+                      "state": "paused"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_resume",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.googlehome9050"
+                      }
+                    },
+                    "primary": "Phát"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.googlehome9050_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_pause",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.googlehome9050"
+                      }
+                    },
+                    "primary": "Dừng"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.googlehome9050_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_shuffle_toggle",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.googlehome9050"
+                      }
+                    },
+                    "primary": "{% if state_attr('media_player.googlehome9050_pytube', 'shuffle') %}\n  Trộn: Bật\n{% else %}\n  Trộn: Tắt\n{% endif %}\n"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.googlehome9050_pytube",
+                      "state": "buffering"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "primary": "Đang tải... {{ state_attr('media_player.googlehome9050_pytube', 'download_percentage') | default(0) }}%"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.bedplaybolero",
+                  "name": "🛏️ BOLERO",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bedplaybolero",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.bedplaytanco",
+                  "name": "🛏️ TÂN CỔ",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bedplaytanco",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.bedplaycailuong",
+                  "name": "🛏️ Random ",
+                  "content_info": "name",
+                  "icon_color": "primary",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bedplaycailuong",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.bed_mom_play_cailuong",
+                  "name": "Cai Luong",
+                  "icon": "mdi:bookmark-music",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bed_mom_play_cailuong",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "double_tap_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "use_entity_picture": false,
+                  "content_info": "name"
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.bed_play_mix",
+                  "name": "Mix",
+                  "icon": "mdi:bookmark-music",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bed_play_mix",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "double_tap_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "use_entity_picture": false,
+                  "content_info": "name"
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "heading",
+                  "icon": "",
+                  "heading": "💿 Phát nhạc từ playlist",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "input_text.playlist_tmp"
+                    }
+                  ],
+                  "alignment": "center"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "script.bed_play_tmp",
+                      "name": "Phát nhạc",
+                      "content_info": "name",
+                      "icon_color": "red",
+                      "use_entity_picture": false,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.bed_play_tmp",
+                        "target": {}
+                      },
+                      "icon": "mdi:play"
+                    }
+                  ],
+                  "alignment": "center"
+                }
+              ]
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "user",
+              "users": [
+                "3ef561bf87834cf8a0432f978bae4cb5"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "Lượm Media Player"
+            },
+            {
+              "type": "media-control",
+              "entity": "media_player.nestmini4190",
+              "theme": "waves"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.nestmini4190_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_next_song",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.nestmini4190"
+                      }
+                    },
+                    "primary": "Tiếp"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.nestmini4190_pytube",
+                      "state": "paused"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_resume",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.nestmini4190"
+                      }
+                    },
+                    "primary": "Phát"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.nestmini4190_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_pause",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.nestmini4190"
+                      }
+                    },
+                    "primary": "Dừng"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.nestmini4190_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_shuffle_toggle",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.nestmini4190"
+                      }
+                    },
+                    "primary": "{% if state_attr('media_player.nestmini4190_pytube', 'shuffle') %}\n  Trộn: Bật\n{% else %}\n  Trộn: Tắt\n{% endif %}\n"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.nestmini4190_pytube",
+                      "state": "buffering"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "primary": "Đang tải... {{ state_attr('media_player.nestmini4190_pytube', 'download_percentage') | default(0) }}%"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.bedluomplay",
+                  "name": "🗂️  Lượm playlist",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bedluomplay",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "automation.bed_luom_alarm",
+                  "name": "⏰  Báo thức",
+                  "content_info": "name",
+                  "icon_color": "primary",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.bedluomalarmplay",
+                    "target": {}
+                  }
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "heading",
+                  "icon": "",
+                  "heading": "💿 Phát nhạc từ playlist",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "input_text.playlist_luom_tmp"
+                    }
+                  ],
+                  "alignment": "center"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "script.kit_play_tmp",
+                      "name": "Phát nhạc",
+                      "content_info": "name",
+                      "icon_color": "red",
+                      "use_entity_picture": false,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.bed_luom_tmp",
+                        "target": {}
+                      },
+                      "icon": "mdi:play"
+                    }
+                  ],
+                  "alignment": "center"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card",
+              "title_tap_action": {
+                "action": "none"
+              },
+              "subtitle_tap_action": {
+                "action": "none"
+              },
+              "title": "R1"
+            },
+            {
+              "type": "media-control",
+              "entity": "media_player.r1",
+              "theme": "waves"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.r1_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_next_song",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.r1"
+                      }
+                    },
+                    "primary": "Tiếp"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.r1_pytube",
+                      "state": "paused"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_resume",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.r1"
+                      }
+                    },
+                    "primary": "Phát"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.r1_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_pause",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.r1"
+                      }
+                    },
+                    "primary": "Dừng",
+                    "features_position": "bottom"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.r1_pytube",
+                      "state": "playing"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "tap_action": {
+                      "action": "perform-action",
+                      "perform_action": "pyscript.pytube_shuffle_toggle",
+                      "target": {},
+                      "data": {
+                        "entity_id": "media_player.r1"
+                      }
+                    },
+                    "primary": "{% if state_attr('media_player.r1_pytube', 'shuffle') %}\n  Trộn: Bật\n{% else %}\n  Trộn: Tắt\n{% endif %}\n"
+                  }
+                },
+                {
+                  "type": "conditional",
+                  "conditions": [
+                    {
+                      "condition": "state",
+                      "entity": "media_player.r1_pytube",
+                      "state": "buffering"
+                    }
+                  ],
+                  "card": {
+                    "type": "custom:mushroom-template-card",
+                    "primary": "Đang tải... {{ state_attr('media_player.r1_pytube', 'download_percentage') | default(0) }}%"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-chips-card",
+              "chips": [
+                {
+                  "type": "entity",
+                  "entity": "script.r1_play_bolero",
+                  "name": "🛏️ BOLERO",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.r1_play_bolero",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.r1_play_tanco",
+                  "name": "🛏️ TÂN CỔ",
+                  "content_info": "name",
+                  "icon_color": "red",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.r1_play_tanco",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.r1_play_cailuong",
+                  "name": "🛏️ Random ",
+                  "content_info": "name",
+                  "icon_color": "primary",
+                  "use_entity_picture": false,
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.r1_play_cailuong",
+                    "target": {}
+                  }
+                },
+                {
+                  "type": "entity",
+                  "entity": "script.r1_play_mix",
+                  "name": "Mix",
+                  "icon": "mdi:bookmark-music",
+                  "tap_action": {
+                    "action": "call-service",
+                    "service": "script.r1_play_mix",
+                    "target": {}
+                  },
+                  "hold_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "double_tap_action": {
+                    "action": "call-service",
+                    "service": ""
+                  },
+                  "use_entity_picture": false,
+                  "content_info": "name"
+                }
+              ],
+              "alignment": "center"
+            },
+            {
+              "type": "custom:mushroom-cover-card"
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "heading",
+                  "icon": "",
+                  "heading": "💿 Phát nhạc từ playlist",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "input_text.playlist_tmp"
+                    }
+                  ],
+                  "alignment": "center"
+                },
+                {
+                  "type": "custom:mushroom-chips-card",
+                  "chips": [
+                    {
+                      "type": "entity",
+                      "entity": "script.r1_play_tmp",
+                      "name": "Phát nhạc",
+                      "content_info": "name",
+                      "icon_color": "red",
+                      "use_entity_picture": false,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.r1_play_tmp",
+                        "target": {}
+                      },
+                      "icon": "mdi:play"
+                    }
+                  ],
+                  "alignment": "center"
+                }
+              ]
+            }
+          ],
+          "visibility": [
+            {
+              "condition": "user",
+              "users": [
+                "3ef561bf87834cf8a0432f978bae4cb5"
+              ]
+            }
+          ]
+        }
+      ],
+      "background": {
+        "opacity": 100,
+        "alignment": "center",
+        "size": "cover",
+        "repeat": "repeat",
+        "attachment": "fixed"
+      },
+      "title": "Nghe Nhạc",
+      "theme": "Mushroom"
+    },
+    {
+      "type": "sections",
+      "max_columns": 4,
+      "title": "Camera",
+      "path": "camera",
+      "sections": [
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "show_state": true,
+              "show_name": true,
+              "camera_view": "auto",
+              "fit_mode": "cover",
+              "type": "picture-entity",
+              "entity": "camera.bal"
+            },
+            {
+              "show_state": true,
+              "show_name": true,
+              "camera_view": "auto",
+              "fit_mode": "cover",
+              "type": "picture-entity",
+              "entity": "camera.kitchen"
+            }
+          ]
+        }
+      ],
+      "header": {
+        "layout": "center",
+        "badges_position": "bottom",
+        "badges_wrap": "wrap"
+      }
+    },
+    {
+      "title": "Shortcuts",
+      "path": "test",
+      "icon": "mdi:flash",
+      "badges": [
+        {
+          "type": "entity",
+          "entity": "sensor.lunar_today"
+        }
+      ],
+      "cards": [
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "switch.xiaomi_sg_2090490852_p76_alarm_p_7_1",
+              "name": " Alarm Alarm"
+            },
+            {
+              "entity": "switch.xiaomi_sg_2090490852_p76_physical_controls_locked_p_8_1",
+              "name": " Child Lock Chil Lock"
+            },
+            {
+              "entity": "switch.xiaomi_sg_2090490852_p76_delay_p_9_1",
+              "name": " Delay Delay"
+            },
+            {
+              "entity": "number.xiaomi_sg_2090490852_p76_delay_time_p_9_2",
+              "name": " Delay Delay Time"
+            },
+            {
+              "entity": "fan.xiaomi_sg_2090490852_p76_s_2_fan",
+              "name": " fan"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_toggle_a_2_3",
+              "name": " fan Device on/off"
+            },
+            {
+              "entity": "select.xiaomi_sg_2090490852_p76_fan_level_a_p_2_4",
+              "name": " fan Fan level"
+            },
+            {
+              "entity": "select.xiaomi_sg_2090490852_p76_horizontal_swing_included_angle_p_2_7",
+              "name": " fan Horizontal swing included angle"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_turn_downward_a_2_7",
+              "name": " fan Turn Downward"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_turn_left_a_2_4",
+              "name": " fan turn left"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_turn_right_a_2_5",
+              "name": " fan turn right"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_turn_upward_a_2_6",
+              "name": " fan Turn Upward"
+            },
+            {
+              "entity": "switch.xiaomi_sg_2090490852_p76_vertical_swing_p_2_8",
+              "name": " fan Vertical Swing"
+            },
+            {
+              "entity": "select.xiaomi_sg_2090490852_p76_vertical_swing_included_angle_p_2_9",
+              "name": " fan Vertical swing included angle"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_toggle_mode_a_11_1",
+              "name": "* dm-service Cycle through mode settings"
+            },
+            {
+              "entity": "button.xiaomi_sg_2090490852_p76_loop_gear_a_11_2",
+              "name": "* dm-service Cycle through speed adjustment"
+            }
+          ],
+          "title": "Quạt"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "script.electric_heater_pwd_on_off"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "sensor.bed_mom_heater_power"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "switch.bed_mom_switch_fan"
+            }
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "custom:mushroom-title-card"
+            },
+            {
+              "type": "entities",
+              "entities": [
+                {
+                  "entity": "script.notitime_time_notification"
+                }
+              ],
+              "visibility": [
+                {
+                  "condition": "user",
+                  "users": [
+                    "3ef561bf87834cf8a0432f978bae4cb5"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "custom:mushroom-title-card"
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "binary_sensor.toilet_leakwater_water_leak"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "binary_sensor.shower_leakwater_water_leak"
+          ]
+        },
+        {
+          "type": "vertical-stack",
+          "cards": [
+            {
+              "type": "entities",
+              "entities": [
+                "binary_sensor.livancestralpresence_presence_sensor_1",
+                "binary_sensor.livancestralpresence_presence_sensor_2",
+                "binary_sensor.livancestralpresence_presence_sensor_3",
+                "sensor.livancestralpresence_light_sensor_light_level"
+              ],
+              "title": "liv.ancestral.presence"
+            },
+            {
+              "type": "entities",
+              "entities": [
+                "binary_sensor.presence_sensor_fp2_e42d_presence_sensor_2",
+                "sensor.presence_sensor_fp2_e42d_light_sensor_light_level",
+                "binary_sensor.presence_sensor_fp2_e42d_presence_sensor_1"
+              ],
+              "title": "kit.presence.sensor"
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "script.lightsoff_lights_off",
+            "script.lightsoffsleep_sleep_time",
+            "script.lightson_lights_on"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "binary_sensor.presence_sensor_fp2_e42d_presence_sensor_2",
+            "binary_sensor.presence_sensor_fp2_e42d_presence_sensor_1",
+            "sensor.presence_sensor_fp2_e42d_light_sensor_light_level"
+          ],
+          "title": "kit.presence.sensor"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "input_boolean.sos_toggle"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "select.0x54ef4410002bb07f_mode_switch",
+              "name": "Mode switch"
+            },
+            "switch.0x54ef4410002bb07f_top",
+            "switch.0x54ef4410002bb07f_bottom"
+          ],
+          "title": "shower.toilet.switches"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "input_boolean.liv_bool_light_ancestral_1"
+            },
+            {
+              "entity": "input_boolean.liv_bool_light_ancestral_4"
+            }
+          ]
+        },
+        {
+          "type": "horizontal-stack",
+          "cards": []
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "switch.bed_air_conditioner"
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.kit_switch_mosquito"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.kit_balcony_plug"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "binary_sensor.storage_presence_presence"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.bal_plug_wifi"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "binary_sensor.bal_presence_presence"
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "sensor.bal_presence_illuminance",
+              "name": "Illuminance"
+            },
+            {
+              "entity": "sensor.bal_presence_motion_state",
+              "name": "Motion state"
+            },
+            {
+              "entity": "binary_sensor.bal_presence_presence",
+              "name": "Presence"
+            }
+          ],
+          "title": "bal.presence"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "sensor.liv_presence_ancestral_group2_motion_state",
+              "name": "Motion state"
+            },
+            {
+              "entity": "binary_sensor.liv_presence_ancestral_group2_presence",
+              "name": "Presence"
+            }
+          ],
+          "title": "liv.presence.ancestral.group2"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "sensor.kit_presence_illuminance",
+              "name": "Illuminance"
+            },
+            {
+              "entity": "sensor.kit_presence_motion_state",
+              "name": "Motion state"
+            },
+            {
+              "entity": "binary_sensor.kit_presence_presence",
+              "name": "Presence"
+            },
+            {
+              "entity": "sensor.kit_presence_target_distance",
+              "name": "Target distance"
+            }
+          ],
+          "title": "kit.presence"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "sensor.toilet_shower_presence_illuminance",
+              "name": "Illuminance"
+            },
+            {
+              "entity": "sensor.toilet_shower_presence_motion_state",
+              "name": "Motion state"
+            },
+            {
+              "entity": "binary_sensor.toilet_shower_presence_presence",
+              "name": "Occupancy"
+            },
+            {
+              "entity": "sensor.toilet_shower_presence_target_distance",
+              "name": "Target distance"
+            }
+          ],
+          "title": "toilet.shower.presence"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "sensor.presence_sensor_fp2_e42d_light_sensor_light_level",
+            "binary_sensor.presence_sensor_fp2_e42d_presence_sensor_1"
+          ],
+          "title": "kit.presence"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "light.luom",
+              "name": " Light"
+            },
+            {
+              "entity": "button.yeelink_sg_556776092_colore_toggle_a_2_1",
+              "name": " Light Toggle"
+            },
+            {
+              "entity": "number.yeelink_sg_556776092_colore_brightness_delta_p_3_2",
+              "name": "* yeelight brightness-delta"
+            },
+            {
+              "entity": "button.yeelink_sg_556776092_colore_brightness_down_a_3_3",
+              "name": "* yeelight brightness-down"
+            },
+            {
+              "entity": "button.yeelink_sg_556776092_colore_brightness_up_a_3_2",
+              "name": "* yeelight brightness-up"
+            },
+            {
+              "entity": "number.yeelink_sg_556776092_colore_brightness_with_zero_p_3_5",
+              "name": "* yeelight brightness-with-zero"
+            },
+            {
+              "entity": "select.yeelink_sg_556776092_colore_ct_adjust_alexa_p_3_4",
+              "name": "* yeelight ct-adjust-alexa"
+            },
+            {
+              "entity": "number.yeelink_sg_556776092_colore_ct_delta_p_3_3",
+              "name": "* yeelight ct-delta"
+            },
+            {
+              "entity": "button.yeelink_sg_556776092_colore_ct_down_a_3_5",
+              "name": "* yeelight ct-down"
+            },
+            {
+              "entity": "button.yeelink_sg_556776092_colore_ct_up_a_3_4",
+              "name": "* yeelight ct-up"
+            },
+            {
+              "entity": "text.yeelink_sg_556776092_colore_flow_param_p_3_1",
+              "name": "* yeelight flow-param"
+            },
+            {
+              "entity": "text.yeelink_sg_556776092_colore_set_adjust_p_3_7",
+              "name": "* yeelight set-adjust"
+            },
+            {
+              "entity": "text.yeelink_sg_556776092_colore_set_scene_p_3_6",
+              "name": "* yeelight set-scene"
+            }
+          ],
+          "title": "Yeelight Smart LED Bulb W4 lite（multicolor）"
+        },
+        {
+          "type": "grid",
+          "square": false,
+          "columns": 1,
+          "cards": [
+            {
+              "type": "entities",
+              "entities": [
+                "remote.living_room_tv"
+              ],
+              "title": "Living Room TV"
+            },
+            {
+              "type": "media-control",
+              "entity": "media_player.living_room_tv_2"
+            }
+          ]
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.toilet_water_valve"
+          ],
+          "title": "toilet.water_valve"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.shower_water_valve"
+          ],
+          "title": "shower.water_valve"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            "switch.toilet_water_valve"
+          ],
+          "title": "toilet.water_valve"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "switch.mom_toilet_light_do_not_disturb",
+              "name": "Do not disturb"
+            },
+            "light.mom_toilet_light"
+          ],
+          "title": "mom.toilet.light"
+        },
+        {
+          "type": "entities",
+          "entities": [
+            {
+              "entity": "sensor.toilet_shower_presence_illuminance",
+              "name": "Illuminance"
+            },
+            {
+              "entity": "binary_sensor.toilet_shower_presence_occupancy",
+              "name": "Occupancy"
+            },
+            {
+              "entity": "sensor.toilet_shower_presence_spatial_learning_state",
+              "name": "Spatial learning state"
+            }
+          ],
+          "title": "toilet.shower.presence"
+        }
+      ],
+      "visible": [
+        {
+          "user": "3ef561bf87834cf8a0432f978bae4cb5"
+        },
+        {
+          "user": "191ddab6b4824f8bb3da4087cf4f7681"
+        }
+      ]
+    }
+  ]
+}

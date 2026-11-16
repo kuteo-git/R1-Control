@@ -42,7 +42,14 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import com.r1control.app.ui.components.CardFrame
+import com.r1control.app.ui.components.CardGround
+import com.r1control.app.ui.components.CardMinHeight
+import com.r1control.app.ui.components.DiscOverCover
 import com.r1control.app.ui.components.LocalHaptics
+import com.r1control.app.ui.components.PlayerCard
+import com.r1control.app.ui.components.PlayerView
+import com.r1control.app.ui.components.fillAfterDrag
 import com.r1control.app.ui.components.notchFeel
 import com.r1control.app.ui.components.notchOf
 import com.r1control.app.ui.components.volumeNotches
@@ -149,13 +156,6 @@ private fun VoiceSection(row: VoiceRow, actions: ControlActions) {
     }
 }
 
-private val CardMinHeight = 224.dp
-private val CardGround = Brush.radialGradient(
-    colors = listOf(Color(0xFF6B6B71), Color(0xFF454549), Tokens.Card),
-    center = Offset(450f, 380f),
-    radius = 760f,
-)
-
 @Composable
 private fun MediaCard(card: CardState, canNext: Boolean, actions: ControlActions) {
     val music = ((card as? CardState.Showing)?.nowPlaying) as? NowPlaying.Music
@@ -198,27 +198,6 @@ private fun MediaCard(card: CardState, canNext: Boolean, actions: ControlActions
                 is NowPlaying.Music -> MusicBody(now, canNext, actions)
             }
         }
-    }
-}
-
-@Composable
-private fun CardFrame(
-    glyph: @Composable () -> Unit,
-    topEnd: @Composable () -> Unit,
-    middle: @Composable () -> Unit,
-    bottom: @Composable () -> Unit,
-) {
-    Column(
-        Modifier.fillMaxWidth().heightIn(min = CardMinHeight).padding(horizontal = Space.Large, vertical = Space.Medium),
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-            glyph()
-            Spacer(Modifier.weight(1f))
-            topEnd()
-        }
-        middle()
-        Box(Modifier.fillMaxWidth().heightIn(min = 52.dp), contentAlignment = Alignment.BottomCenter) { bottom() }
     }
 }
 
@@ -323,101 +302,35 @@ private fun AssistantBody(now: NowPlaying.Assistant) {
     )
 }
 
-private val DiscOverCover = Color.Black.copy(alpha = 0.45f)
+/** The R1 speaker as the shared card draws it: its Bluetooth output names a line, a download is a prepare. */
+private fun NowPlaying.Music.toPlayerView(canNext: Boolean) = PlayerView(
+    title = title,
+    artist = artist,
+    coverUrl = coverUrl,
+    positionS = positionS,
+    durationS = durationS,
+    playing = phase is NowPlaying.Phase.Playing,
+    canSeek = canSeek,
+    canNext = canNext,
+    onSpeaker = (output as? NowPlaying.Output.Bluetooth)?.speakerName ?: "",
+    preparingPercent = (phase as? NowPlaying.Phase.Downloading)?.percent ?: -1,
+)
 
 @Composable
 private fun MusicBody(now: NowPlaying.Music, canNext: Boolean, actions: ControlActions) {
     val strings = LocalStrings.current
-    CardFrame(
-        glyph = { R1Icon(R1Icons.MusicNote, null, tint = Tokens.OnGround, size = 26.dp) },
+    PlayerCard(
+        view = now.toPlayerView(canNext),
+        onPlayPause = actions.onPlayPause,
+        onSeek = { actions.onSeek(it) },
+        onSeekDone = actions.onSeekDone,
+        onNext = actions.onNext,
         topEnd = {
             // One capsule for the two secondary actions, so only Pause reads as a disc.
             Row(Modifier.clip(CircleShape).background(DiscOverCover), verticalAlignment = Alignment.CenterVertically) {
                 IconTap(R1Icons.Queue, strings.songsPlaying, actions.onOpenSongs, tint = Color.White, iconSize = 20.dp)
                 Box(Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.22f)))
                 IconTap(R1Icons.Stop, strings.stop, actions.onStop, tint = Color.White, iconSize = 20.dp)
-            }
-        },
-        middle = {
-            Row(Modifier.fillMaxWidth().padding(vertical = Space.Small), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f).padding(end = Space.Medium), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
-                    Text(
-                        now.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (now.hasArtist) {
-                        Text(
-                            now.artist,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Tokens.OnGround.copy(alpha = 0.78f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    val output = now.output
-                    if (output is NowPlaying.Output.Bluetooth) {
-                        Text(
-                            strings.onSpeaker(output.speakerName),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Tokens.Accent,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                val phase = now.phase
-                IconTap(
-                    icon = if (phase == NowPlaying.Phase.Playing) R1Icons.Pause else R1Icons.Play,
-                    description = if (phase == NowPlaying.Phase.Playing) strings.pause else strings.play,
-                    onClick = actions.onPlayPause,
-                    enabled = phase !is NowPlaying.Phase.Downloading,
-                    tint = Color.White,
-                    background = DiscOverCover,
-                    iconSize = 30.dp,
-                    box = 60.dp,
-                )
-            }
-        },
-        bottom = {
-            val phase = now.phase
-            if (phase is NowPlaying.Phase.Downloading) {
-                Column(Modifier.fillMaxWidth().padding(bottom = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Small)) {
-                    Text(strings.downloading(phase.percent), style = MaterialTheme.typography.labelMedium, color = Tokens.OnGround)
-                    LinearProgressIndicator(
-                        progress = { phase.percent / 100f },
-                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
-                        color = Color.White,
-                        trackColor = Color.White.copy(alpha = 0.25f),
-                    )
-                }
-            } else {
-                // No previous: the R1 has no such command. Next only when the store says there is one to go to.
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        val duration = now.durationS.coerceAtLeast(1)
-                        R1Slider(
-                            value = now.positionS.coerceIn(0, duration).toFloat(),
-                            onValueChange = { actions.onSeek(it.toInt()) },
-                            valueRange = 0f..duration.toFloat(),
-                            onValueChangeFinished = actions.onSeekDone,
-                            enabled = now.canSeek,
-                            active = Color.White,
-                            inactive = Color.White.copy(alpha = 0.3f),
-                            description = strings.seekPosition,
-                            valueText = strings.playbackPosition(formatClock(now.positionS), formatClock(now.durationS)),
-                        )
-                        Row(Modifier.fillMaxWidth().padding(horizontal = Space.Small)) {
-                            Text(formatClock(now.positionS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
-                            Spacer(Modifier.weight(1f))
-                            Text(formatClock(now.durationS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
-                        }
-                    }
-                    if (canNext) {
-                        IconTap(R1Icons.Next, strings.next, actions.onNext, tint = Tokens.OnGround)
-                    }
-                }
             }
         },
     )
@@ -476,7 +389,7 @@ fun VolumePill(volume: VolumeState, onDrag: (Int) -> Unit, onDone: () -> Unit, m
                     onHorizontalDrag = { change, dx ->
                         change.consume()
                         travelled += dx
-                        val pct = volumeAfterDrag(start, travelled, size.width.toFloat())
+                        val pct = fillAfterDrag(start, travelled, size.width.toFloat())
                         val notch = notchOf(pct.toFloat(), 0f..100f, notches)
                         notchFeel(felt, notch, notches)?.let(haptics::play)
                         felt = notch

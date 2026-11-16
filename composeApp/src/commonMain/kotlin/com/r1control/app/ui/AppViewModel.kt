@@ -9,6 +9,8 @@ import com.r1control.app.domain.usecase.MusicStore
 import com.r1control.app.domain.usecase.SpeakerFeed
 import com.r1control.app.ui.chat.ChatViewModel
 import com.r1control.app.ui.control.ControlViewModel
+import com.r1control.app.ui.ha.HaSettingsViewModel
+import com.r1control.app.ui.ha.HaViewModel
 import com.r1control.app.ui.music.MiniPlayerViewModel
 import com.r1control.app.ui.music.MusicViewModel
 import com.r1control.app.ui.music.NowPlayingViewModel
@@ -102,6 +104,10 @@ class AppModels(container: AppContainer, scope: CoroutineScope) {
     val mini = MiniPlayerViewModel(feed, container.speaker, store, scope)
     val nowPlaying = NowPlayingViewModel(store, feed, scope)
     val chat = ChatViewModel(feed, container.sendChat, scope)
+    val ha = HaViewModel(container.haSettings, container.ha, container.foreground, scope, container.haLayout, container.dashboardImporter)
+
+    /** The Home Assistant tab's own form: it keeps what was typed while the tab is away. The gear's page makes a fresh one. */
+    val haSetup = HaSettingsViewModel(container.haSettings, container.connectHa, scope, onConnected = ha::signedIn)
 
     /** A new address is a new speaker: the old one's reading, and what was sent to it, must not be shown as this one's. */
     fun addressSaved(address: R1Address) {

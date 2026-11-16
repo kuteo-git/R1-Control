@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 sealed interface CardState {
     /** The first reading is on its way. */
@@ -245,14 +244,4 @@ class ControlViewModel(
         const val HOLD_MILLIS = 1_500L
         const val END_HOLD_MILLIS = 4_000L
     }
-}
-
-/**
- * The level after a finger moved [dxPx] along a pill [widthPx] wide, from the
- * level [startPct] it had when the finger went down: the whole width is 0 to
- * 100. Relative, as Google Home's pill is, so where the finger lands sets nothing.
- */
-fun volumeAfterDrag(startPct: Int, dxPx: Float, widthPx: Float): Int {
-    if (widthPx <= 0f) return startPct.coerceIn(0, 100)
-    return (startPct + dxPx / widthPx * 100f).roundToInt().coerceIn(0, 100)
 }

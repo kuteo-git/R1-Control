@@ -56,6 +56,17 @@ fun notchFeel(from: Int, to: Int, last: Int): Haptic? = when {
 fun volumeNotches(steps: Int): Int = if (steps > 0) steps else 20
 
 /**
+ * The level after a finger moved [travelPx] along a fill [spanPx] long, from the level [startPct] it had when
+ * the finger went down: the whole span is 0 to 100. Relative, as Google Home's pill is, so where the finger
+ * lands sets nothing. One function for every draggable fill: the volume pill (travel is rightward) and the
+ * Home Assistant level slider (travel is upward) hand it the same thing.
+ */
+fun fillAfterDrag(startPct: Int, travelPx: Float, spanPx: Float): Int {
+    if (spanPx <= 0f) return startPct.coerceIn(0, 100)
+    return (startPct + travelPx / spanPx * 100f).roundToInt().coerceIn(0, 100)
+}
+
+/**
  * `clickable` that is felt. Every press in `ui` goes through here
  * (`HapticGuardTest`); [selected] non-null makes it `selectable`, for a radio row.
  */

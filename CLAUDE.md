@@ -23,7 +23,7 @@ the everyday remote, not a clone of the panel.
 |---|---|
 | Platforms | Android phone + iOS. No desktop, no TV |
 | Reach | **House wifi only.** The R1 speaks plain HTTP, no TLS, no auth. The address is DHCP, typed by hand as `ip:port` (default 8088) |
-| Secrets | `/api/state` carries masked keys and the household's Home Assistant device names. **Never log or show a raw body.** No Ktor `Logging` plugin (guarded); exceptions carry a call name, never a body |
+| Secrets | `/api/state` carries masked keys and the household's Home Assistant device names. **Never log or show a raw body.** No Ktor `Logging` plugin (guarded); exceptions carry a call name, never a body. The Home Assistant token lives in `HaAddress` (its `toString` leaves it out), the first WebSocket frame and `SettingsDataSource`; nothing in the app prints (`ArchitectureGuardTest`) |
 | Everything on Data2 | Source and toolchain. The internal disk is nearly full |
 | Testing the real R1 | Evening or night: set `volume` to 0 first and restore it afterwards (spec, "Night rule") |
 
@@ -52,6 +52,21 @@ iosApp/                  Swift entry point, hand-written .xcodeproj
 docs/fixtures/           verbatim R1 replies; the single source for wire tests
 ```
 
+- **Home Assistant is a second backend, over its WebSocket API** (`ws://<host>/api/websocket`):
+  `HaRepository` (`domain/repository`) exposes `connectionState`, `entities` and
+  `callService`; `WebSocketHaRepository` runs `auth_required` -> token -> `auth_ok` ->
+  `subscribe_entities`, retries a dropped link with a growing delay and never retries a
+  refused token. Frames are read in `data/remote/HaWire.kt` and nowhere else; the socket is
+  a seam (`HaSocket`) so the protocol is tested without a network. `HaViewModel` owns the
+  link's lifetime (open while the app is on screen and a connection is saved);
+  `ConnectHa` saves an address and token only once Home Assistant accepted them. The tabs
+  are HA, R1, Music, Chat. The HA tab is a native dashboard seeded once from Home Assistant's own
+  Lovelace configuration (`HaRepository.dashboardConfig`, read on every fresh connection;
+  `importDashboard` in `data/remote/LovelaceImport.kt` turns it into `HaDashboard`, sections of
+  `HaTile`s, the one place that knows Lovelace's JSON). A tile is layout only: its live state is
+  looked up by entity id when drawn. Conditional and Jinja template cards are skipped for now.
+  While the dashboard is unread or unreadable the tab lists live entities instead.
+  `HaLiveTest` runs against a real instance when `HA_LIVE_ADDRESS` (and `HA_LIVE_TOKEN`) is set.
 - **No `@Serializable` outside `data`.** Domain types are not the R1's JSON.
 - **Nothing in `domain` or a ViewModel is nullable. DTOs are.** Absence is
   decided once, in the mapper, and named (`hasTtsHost`, `SavedAddress.Unset`,

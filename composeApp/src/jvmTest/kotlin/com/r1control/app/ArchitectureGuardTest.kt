@@ -57,6 +57,26 @@ class ArchitectureGuardTest {
         if (offenders.isNotEmpty()) fail("HTTP logging would copy secrets into logs:\n" + offenders.joinToString("\n") { it.name })
     }
 
+    /**
+     * The Home Assistant token rides in `HaAddress`, in the first WebSocket frame and in storage. Printing
+     * is how a secret ends up in a log, so nothing in the app prints: not the address, not a frame.
+     */
+    @Test fun nothingInTheAppPrintsOrLogs() {
+        val files = listOf("commonMain", "androidMain", "iosMain").flatMap { set ->
+            sourceRoot().resolve(set).walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+        }
+        if (files.size < 50) fail("only ${files.size} source files found; the guard would pass for the wrong reason")
+        val offenders = files.filter { file -> codeLines(file).any { line -> PRINTING.any { line.contains(it) } } }
+        if (offenders.isNotEmpty()) fail("A secret can reach a log through printing:\n" + offenders.joinToString("\n") { it.name })
+    }
+
+    @Test fun theGuardForPrintingSeesWhatItIsFor() {
+        val bad = listOf("println(token)", "android.util.Log.d(\"x\", y)", "NSLog(\"%@\", z)", "print(\"x\")")
+        bad.forEach { sample -> check(PRINTING.any { sample.contains(it) }) { "missed: $sample" } }
+    }
+
+    private val PRINTING = listOf("println(", "print(\"", "NSLog(", "Log.d(", "Log.e(", "Log.i(", "Log.w(", "Log.v(")
+
     private fun assertNoImports(layer: String, forbidden: List<Pair<String, String>>) {
         val root = sourceRoot().resolve("commonMain/kotlin/com/r1control/app/$layer")
         if (!root.exists()) fail("$layer does not exist; the guard would pass for the wrong reason")

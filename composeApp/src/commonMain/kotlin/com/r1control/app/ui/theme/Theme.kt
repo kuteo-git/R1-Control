@@ -24,6 +24,8 @@ object Tokens {
     val Accent = Color(0xFFAEB9D6)
     val OnGround = Color(0xFFE6E6EA)
     val OnGroundMuted = Color(0xFFA3A3AB)
+    /** A live connection's dot: a soft green in the pastel key of the rest. */
+    val Online = Color(0xFF9FD8A8)
     val Error = Color(0xFFF2B8B5)
     val ErrorContainer = Color(0xFF3B2A2A)
     val Scrim = Color(0xFF000000)

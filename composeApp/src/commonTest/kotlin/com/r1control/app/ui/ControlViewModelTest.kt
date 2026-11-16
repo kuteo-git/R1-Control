@@ -11,7 +11,7 @@ import com.r1control.app.testing.track
 import com.r1control.app.testing.unreachable
 import com.r1control.app.ui.control.CardState
 import com.r1control.app.ui.control.ControlViewModel
-import com.r1control.app.ui.control.volumeAfterDrag
+import com.r1control.app.ui.components.fillAfterDrag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -188,12 +188,12 @@ class ControlViewModelTest {
     }
 
     @Test fun aDragMovesTheLevelByHowFarTheFingerTravelsNotToWhereItLanded() {
-        assertEquals(40, volumeAfterDrag(40, 0f, 400f), "a finger that has not moved sets nothing")
-        assertEquals(65, volumeAfterDrag(40, 100f, 400f), "a quarter of the pill is a quarter of the range")
-        assertEquals(15, volumeAfterDrag(40, -100f, 400f))
-        assertEquals(100, volumeAfterDrag(40, 900f, 400f))
-        assertEquals(0, volumeAfterDrag(40, -900f, 400f))
-        assertEquals(40, volumeAfterDrag(40, 10f, 0f))
+        assertEquals(40, fillAfterDrag(40, 0f, 400f), "a finger that has not moved sets nothing")
+        assertEquals(65, fillAfterDrag(40, 100f, 400f), "a quarter of the pill is a quarter of the range")
+        assertEquals(15, fillAfterDrag(40, -100f, 400f))
+        assertEquals(100, fillAfterDrag(40, 900f, 400f))
+        assertEquals(0, fillAfterDrag(40, -900f, 400f))
+        assertEquals(40, fillAfterDrag(40, 10f, 0f))
     }
 
     @Test fun tryAgainOnTheUnreachableCardReadsNowNotAtTheNextPoll() = runTest {

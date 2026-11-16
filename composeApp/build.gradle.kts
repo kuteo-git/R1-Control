@@ -40,6 +40,7 @@ kotlin {
             implementation(libs.ktor.core)
             implementation(libs.ktor.content.negotiation)
             implementation(libs.ktor.json)
+            implementation(libs.ktor.websockets)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.lifecycle.viewmodel.compose)
@@ -67,6 +68,8 @@ kotlin {
         // ImageComposeScene, for the one test that needs real pointer events (the drag).
         jvmTest.dependencies {
             implementation(compose.desktop.currentOs)
+            // An engine for the live Home Assistant test, which is skipped unless HA_LIVE_ADDRESS is set.
+            implementation(libs.ktor.okhttp)
         }
     }
 }

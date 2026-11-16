@@ -21,6 +21,9 @@ sealed interface Page {
     data class Settings(val page: SettingsPage) : Page
     data object AllPlaylists : Page
     data object NowPlaying : Page
+    data object HaSettings : Page
+    data object Music : Page
+    data object Chat : Page
     data class PlaylistDetails(val id: PlaylistId) : Page
 }
 
@@ -51,6 +54,9 @@ fun Page.token(): String = when (this) {
     is Page.Settings -> "settings:" + page.name
     Page.AllPlaylists -> "playlists"
     Page.NowPlaying -> "nowplaying"
+    Page.HaSettings -> "hasettings"
+    Page.Music -> "music"
+    Page.Chat -> "chat"
     is Page.PlaylistDetails -> "playlist:" + id.value
 }
 
@@ -58,6 +64,9 @@ fun Page.token(): String = when (this) {
 fun pageOf(token: String): Page? = when {
     token == "playlists" -> Page.AllPlaylists
     token == "nowplaying" -> Page.NowPlaying
+    token == "hasettings" -> Page.HaSettings
+    token == "music" -> Page.Music
+    token == "chat" -> Page.Chat
     token.startsWith("playlist:") -> token.removePrefix("playlist:").takeIf { it.isNotEmpty() }?.let { Page.PlaylistDetails(PlaylistId(it)) }
     token.startsWith("settings:") -> SettingsPage.entries.firstOrNull { it.name == token.removePrefix("settings:") }?.let { Page.Settings(it) }
     else -> null
@@ -73,6 +82,9 @@ fun Page.title(strings: Strings, playlists: Playlists): String = when (this) {
     is Page.Settings -> page.title(strings)
     Page.AllPlaylists -> strings.playlists
     Page.NowPlaying -> strings.nowPlaying
+    Page.HaSettings -> strings.haSettingsTitle
+    Page.Music -> strings.tabMusic
+    Page.Chat -> strings.tabChat
     is Page.PlaylistDetails -> {
         val found = (playlists as? Playlists.Readable)?.all?.firstOrNull { it.id == id }
         when {
@@ -91,6 +103,6 @@ fun Page.title(strings: Strings, playlists: Playlists): String = when (this) {
  */
 val Page.keepsMiniPlayer: Boolean
     get() = when (this) {
-        is Page.Settings -> false
-        Page.AllPlaylists, Page.NowPlaying, is Page.PlaylistDetails -> true
+        is Page.Settings, Page.HaSettings -> false
+        Page.AllPlaylists, Page.NowPlaying, Page.Music, Page.Chat, is Page.PlaylistDetails -> true
     }

@@ -3,6 +3,8 @@ package com.r1control.app.ui.i18n
 import androidx.compose.runtime.compositionLocalOf
 import com.r1control.app.domain.model.AddressInput
 import com.r1control.app.domain.model.LanguageChoice
+import com.r1control.app.domain.model.ha.HaConnectionState
+import com.r1control.app.domain.model.ha.HaInput
 import com.r1control.app.domain.repository.SpeakerException
 
 /**
@@ -19,6 +21,7 @@ interface Strings {
     val cancel: String
 
     // tabs
+    val tabHa: String
     val tabControl: String
     val tabMusic: String
     val tabChat: String
@@ -41,6 +44,7 @@ interface Strings {
     fun downloading(percent: Int): String
     fun onSpeaker(name: String): String
     fun volumePercent(pct: Int): String
+    fun percent(value: Int): String
     /** What a screen reader says for the seek bar. */
     val seekPosition: String
     fun playbackPosition(position: String, duration: String): String
@@ -227,6 +231,74 @@ interface Strings {
     /** Something answered at [address], but not as an R1 does. */
     fun addressNotR1(address: String): String
     fun addressUnreachable(address: String, onIphone: Boolean): String
+
+    // Home Assistant
+    val haTitle: String
+    val haSettingsTitle: String
+    val haWelcomeTitle: String
+    val haWelcomeBody: String
+    val haAddressHint: String
+    val haTokenHint: String
+    val haChecking: String
+    val haConnected: String
+    val haTokenRefused: String
+    fun haInvalid(reason: HaInput.Reason): String
+    fun haUnreachable(address: String, onIphone: Boolean): String
+    fun haConnection(state: HaConnectionState): String
+    fun haEntityCount(count: Int): String
+    val haNoEntities: String
+    val haDashboardLoading: String
+    val haDashboardFailed: String
+    val haDashboardEmpty: String
+    val haCoverOpen: String
+    val haCoverClose: String
+    val haCoverStop: String
+    /** Re-importing the dashboard from Home Assistant, in Home Assistant's own settings. */
+    val haSyncTitle: String
+    val haSyncBody: String
+    val haSyncButton: String
+    val haSyncWarning: String
+    val haSyncConfirm: String
+    val haSyncing: String
+    val haSynced: String
+    val haSyncFailed: String
+    /** The edit mode of the dashboard: the top bar's button, the rows, the dialogs and the entity picker. */
+    val haEdit: String
+    val haDoneEditing: String
+    val haEmptyEdit: String
+    val haStartEmpty: String
+    val haAddSection: String
+    val haNewSection: String
+    val haSectionName: String
+    val haRenameSection: String
+    val haUntitledSection: String
+    fun haDeleteSectionQuestion(title: String, tiles: Int): String
+    val haAddTile: String
+    val haRenameTile: String
+    val haTileName: String
+    val haPickEntity: String
+    val haSearchEntities: String
+    val haNothingToPick: String
+    val haNoEntityMatches: String
+    fun haReorderSection(title: String): String
+    fun haReorderTile(title: String): String
+    fun haRemoveSection(title: String): String
+    fun haRemoveTile(title: String): String
+
+    /** Marks a tile in the edit mode that is drawn only while a condition holds. */
+    val haConditionalTile: String
+
+    /** Marks a tile in the edit mode whose text is a template Home Assistant renders. */
+    val haTemplateTile: String
+
+    /** The controls sheet a light or a fan tile opens. */
+    val haBrightness: String
+    val haFanSpeed: String
+    val haOscillation: String
+    val haFanMode: String
+    val haPower: String
+    val haColor: String
+    val haWhite: String
 }
 
 /** What went wrong, in the language of the screen. */
@@ -238,13 +310,14 @@ fun Strings.describe(error: SpeakerException): String = when (error) {
 }
 
 object EnglishStrings : Strings {
-    override val appName = "R1 Control"
+    override val appName = "Control"
     override val speakerName = "R1"
     override val back = "Back"
     override val tryAgain = "Try again"
     override val cancel = "Cancel"
 
-    override val tabControl = "Control"
+    override val tabHa = "HA"
+    override val tabControl = "R1"
     override val tabMusic = "Music"
     override val tabChat = "Chat"
     override val settings = "Settings"
@@ -256,7 +329,7 @@ object EnglishStrings : Strings {
     override val speakerOffline = "The speaker is not answering"
     override fun speakerOfflineHint(onIphone: Boolean) =
         "Check that the speaker is on, that this phone is on the house wifi, and that the address is right." +
-            if (onIphone) " Also check Settings › Privacy & Security › Local Network: R1 Control must be on." else ""
+            if (onIphone) " Also check Settings › Privacy & Security › Local Network: Control must be on." else ""
     override val changeAddress = "Change address"
     override val play = "Play"
     override val pause = "Pause"
@@ -266,6 +339,7 @@ object EnglishStrings : Strings {
     override fun downloading(percent: Int) = "Getting ready… $percent%"
     override fun onSpeaker(name: String) = "on $name"
     override fun volumePercent(pct: Int) = "$pct%"
+    override fun percent(value: Int) = "$value%"
     override val seekPosition = "Position"
     override fun playbackPosition(position: String, duration: String) = "$position of $duration"
 
@@ -433,7 +507,7 @@ object EnglishStrings : Strings {
     override val errorNotConfigured = "Set the speaker's address first."
     override fun errorUnreachable(onIphone: Boolean) =
         if (onIphone) {
-            "Could not reach the speaker. Is the phone on the house wifi, and is R1 Control on in Settings › Privacy & Security › Local Network?"
+            "Could not reach the speaker. Is the phone on the house wifi, and is Control on in Settings › Privacy & Security › Local Network?"
         } else {
             "Could not reach the speaker. Is the phone on the house wifi?"
         }
@@ -449,21 +523,98 @@ object EnglishStrings : Strings {
     override fun addressUnreachable(address: String, onIphone: Boolean) =
         "No speaker found at $address. Check that it is on and that the phone is on the house wifi." +
             if (onIphone) {
-                " If you tapped Don't Allow when iOS asked about the local network, turn R1 Control on in " +
+                " If you tapped Don't Allow when iOS asked about the local network, turn Control on in " +
                     "Settings › Privacy & Security › Local Network, then come back."
             } else {
                 ""
             }
+    override val haTitle = "Home Assistant"
+    override val haSettingsTitle = "Home Assistant connection"
+    override val haWelcomeTitle = "Connect to Home Assistant"
+    override val haWelcomeBody = "Type your Home Assistant's address on your wifi and a long-lived access token. Create one in Home Assistant under your profile, Security, Long-lived access tokens."
+    override val haAddressHint = "e.g. 192.168.1.10:8123"
+    override val haTokenHint = "Long-lived access token"
+    override val haChecking = "Connecting…"
+    override val haConnected = "Connected"
+    override val haTokenRefused = "Home Assistant refused this token. Create a new long-lived access token and paste it here."
+    override fun haInvalid(reason: HaInput.Reason) = when (reason) {
+        HaInput.Reason.EmptyAddress -> "Type Home Assistant's address."
+        HaInput.Reason.BadHost -> "That is not an address. Use a form like 192.168.1.10 or homeassistant.local."
+        HaInput.Reason.BadPort -> "The port must be a number from 1 to 65535."
+        HaInput.Reason.EmptyToken -> "Paste a long-lived access token."
+        HaInput.Reason.BadToken -> "A token has no spaces in it. Paste it again."
+    }
+    override fun haUnreachable(address: String, onIphone: Boolean) =
+        "Home Assistant did not answer at $address. Check the address and that the phone is on the house wifi." +
+            if (onIphone) " If you tapped Don't Allow when iOS asked about the local network, turn Control on in Settings › Privacy & Security › Local Network." else ""
+    override fun haConnection(state: HaConnectionState) = when (state) {
+        HaConnectionState.Disconnected -> "Not connected"
+        HaConnectionState.Connecting -> "Connecting…"
+        HaConnectionState.Connected -> "Connected"
+        HaConnectionState.AuthInvalid -> "Token refused"
+        HaConnectionState.Unreachable -> "Not answering, trying again"
+    }
+    override fun haEntityCount(count: Int) = if (count == 1) "1 entity" else "$count entities"
+    override val haNoEntities = "No entities yet"
+    override val haDashboardLoading = "Loading your Home Assistant dashboard…"
+    override val haDashboardFailed = "Could not read your Home Assistant dashboard. Showing every device instead."
+    override val haDashboardEmpty = "Your dashboard is empty. Tap the pencil to add sections and tiles."
+    override val haCoverOpen = "Open"
+    override val haCoverClose = "Close"
+    override val haCoverStop = "Stop"
+    override val haSyncTitle = "Dashboard"
+    override val haSyncBody = "Replace your dashboard with Home Assistant's current one."
+    override val haSyncButton = "Sync from Home Assistant"
+    override val haSyncWarning = "This replaces your dashboard with Home Assistant's. The tiles, sections and order you changed here are lost."
+    override val haSyncConfirm = "Sync"
+    override val haSyncing = "Syncing…"
+    override val haSynced = "Synced from Home Assistant."
+    override val haSyncFailed = "Could not sync. Check the connection and try again."
+    override val haEdit = "Edit dashboard"
+    override val haDoneEditing = "Done editing"
+    override val haEmptyEdit = "Nothing here yet. Add a section, then add tiles to it."
+    override val haStartEmpty = "Build my own dashboard"
+    override val haAddSection = "Add section"
+    override val haNewSection = "New section"
+    override val haSectionName = "Section name"
+    override val haRenameSection = "Rename section"
+    override val haUntitledSection = "Untitled section"
+    override fun haDeleteSectionQuestion(title: String, tiles: Int) = when (tiles) {
+        0 -> "Delete “$title”?"
+        1 -> "Delete “$title” and its tile?"
+        else -> "Delete “$title” and its $tiles tiles?"
+    }
+    override val haAddTile = "Add tile"
+    override val haRenameTile = "Rename tile"
+    override val haTileName = "Tile name"
+    override val haPickEntity = "Pick a device"
+    override val haSearchEntities = "Search by name or id"
+    override val haNothingToPick = "Every device is already on your dashboard."
+    override val haNoEntityMatches = "No device matches."
+    override fun haReorderSection(title: String) = "Move section $title"
+    override fun haReorderTile(title: String) = "Move $title"
+    override fun haRemoveSection(title: String) = "Delete section $title"
+    override fun haRemoveTile(title: String) = "Remove $title"
+    override val haConditionalTile = "Shown only when a condition holds"
+    override val haTemplateTile = "Template"
+    override val haBrightness = "Brightness"
+    override val haFanSpeed = "Speed"
+    override val haOscillation = "Oscillation"
+    override val haFanMode = "Mode"
+    override val haPower = "Power"
+    override val haColor = "Colour"
+    override val haWhite = "White"
 }
 
 object VietnameseStrings : Strings {
-    override val appName = "R1 Control"
+    override val appName = "Control"
     override val speakerName = "R1"
     override val back = "Quay lại"
     override val tryAgain = "Thử lại"
     override val cancel = "Huỷ"
 
-    override val tabControl = "Điều khiển"
+    override val tabHa = "HA"
+    override val tabControl = "R1"
     override val tabMusic = "Nhạc"
     override val tabChat = "Trò chuyện"
     override val settings = "Cài đặt"
@@ -475,7 +626,7 @@ object VietnameseStrings : Strings {
     override val speakerOffline = "Loa không trả lời"
     override fun speakerOfflineHint(onIphone: Boolean) =
         "Kiểm tra loa đã bật, điện thoại đang bắt wifi nhà và địa chỉ loa đúng." +
-            if (onIphone) " Xem thêm Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ: R1 Control phải được bật." else ""
+            if (onIphone) " Xem thêm Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ: Control phải được bật." else ""
     override val changeAddress = "Đổi địa chỉ"
     override val play = "Phát"
     override val pause = "Tạm dừng"
@@ -485,6 +636,7 @@ object VietnameseStrings : Strings {
     override fun downloading(percent: Int) = "Đang chuẩn bị… $percent%"
     override fun onSpeaker(name: String) = "Phát qua $name"
     override fun volumePercent(pct: Int) = "$pct%"
+    override fun percent(value: Int) = "$value%"
     override val seekPosition = "Vị trí phát"
     override fun playbackPosition(position: String, duration: String) = "$position trên $duration"
 
@@ -652,7 +804,7 @@ object VietnameseStrings : Strings {
     override val errorNotConfigured = "Hãy nhập địa chỉ của loa trước."
     override fun errorUnreachable(onIphone: Boolean) =
         if (onIphone) {
-            "Không nối được với loa. Điện thoại có đang dùng wifi nhà không, và R1 Control đã được bật trong Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ chưa?"
+            "Không nối được với loa. Điện thoại có đang dùng wifi nhà không, và Control đã được bật trong Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ chưa?"
         } else {
             "Không nối được với loa. Điện thoại có đang dùng wifi nhà không?"
         }
@@ -668,11 +820,84 @@ object VietnameseStrings : Strings {
     override fun addressUnreachable(address: String, onIphone: Boolean) =
         "Không thấy loa ở $address. Kiểm tra loa đang bật và điện thoại đang dùng wifi nhà." +
             if (onIphone) {
-                " Nếu lúc iOS hỏi về mạng cục bộ bạn đã chọn Không cho phép, hãy bật R1 Control trong " +
+                " Nếu lúc iOS hỏi về mạng cục bộ bạn đã chọn Không cho phép, hãy bật Control trong " +
                     "Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ rồi quay lại đây."
             } else {
                 ""
             }
+    override val haTitle = "Home Assistant"
+    override val haSettingsTitle = "Kết nối Home Assistant"
+    override val haWelcomeTitle = "Kết nối với Home Assistant"
+    override val haWelcomeBody = "Nhập địa chỉ Home Assistant trong wifi nhà và một mã truy cập dài hạn. Tạo mã trong Home Assistant: hồ sơ, Bảo mật, Mã truy cập dài hạn."
+    override val haAddressHint = "Ví dụ: 192.168.1.10:8123"
+    override val haTokenHint = "Mã truy cập dài hạn"
+    override val haChecking = "Đang kết nối…"
+    override val haConnected = "Đã kết nối"
+    override val haTokenRefused = "Home Assistant từ chối mã này. Hãy tạo mã truy cập dài hạn mới rồi dán vào đây."
+    override fun haInvalid(reason: HaInput.Reason) = when (reason) {
+        HaInput.Reason.EmptyAddress -> "Hãy nhập địa chỉ của Home Assistant."
+        HaInput.Reason.BadHost -> "Địa chỉ không đúng. Dạng như 192.168.1.10 hoặc homeassistant.local."
+        HaInput.Reason.BadPort -> "Cổng phải là số từ 1 đến 65535."
+        HaInput.Reason.EmptyToken -> "Hãy dán mã truy cập dài hạn."
+        HaInput.Reason.BadToken -> "Mã không có khoảng trắng. Hãy dán lại."
+    }
+    override fun haUnreachable(address: String, onIphone: Boolean) =
+        "Home Assistant không trả lời ở $address. Kiểm tra địa chỉ và điện thoại đang dùng wifi nhà." +
+            if (onIphone) " Nếu lúc iOS hỏi về mạng cục bộ bạn đã chọn Không cho phép, hãy bật Control trong Cài đặt › Quyền riêng tư & Bảo mật › Mạng cục bộ." else ""
+    override fun haConnection(state: HaConnectionState) = when (state) {
+        HaConnectionState.Disconnected -> "Chưa kết nối"
+        HaConnectionState.Connecting -> "Đang kết nối…"
+        HaConnectionState.Connected -> "Đã kết nối"
+        HaConnectionState.AuthInvalid -> "Mã bị từ chối"
+        HaConnectionState.Unreachable -> "Không trả lời, đang thử lại"
+    }
+    override fun haEntityCount(count: Int) = "$count thiết bị"
+    override val haNoEntities = "Chưa có thiết bị nào"
+    override val haDashboardLoading = "Đang tải màn hình Home Assistant của bạn…"
+    override val haDashboardFailed = "Không đọc được màn hình Home Assistant của bạn. Đang hiện tất cả thiết bị."
+    override val haDashboardEmpty = "Màn hình của bạn đang trống. Chạm vào bút chì để thêm nhóm và ô."
+    override val haCoverOpen = "Mở"
+    override val haCoverClose = "Đóng"
+    override val haCoverStop = "Dừng"
+    override val haSyncTitle = "Bảng điều khiển"
+    override val haSyncBody = "Thay bảng điều khiển bằng bản hiện tại bên Home Assistant."
+    override val haSyncButton = "Đồng bộ từ Home Assistant"
+    override val haSyncWarning = "Việc này thay bảng điều khiển bằng bản của Home Assistant. Mọi tile, mục và thứ tự bạn đã chỉnh ở đây sẽ mất."
+    override val haSyncConfirm = "Đồng bộ"
+    override val haSyncing = "Đang đồng bộ…"
+    override val haSynced = "Đã đồng bộ từ Home Assistant."
+    override val haSyncFailed = "Không đồng bộ được. Kiểm tra kết nối rồi thử lại."
+    override val haEdit = "Sửa màn hình"
+    override val haDoneEditing = "Xong"
+    override val haEmptyEdit = "Chưa có gì. Hãy thêm một nhóm, rồi thêm ô vào nhóm đó."
+    override val haStartEmpty = "Tự tạo màn hình"
+    override val haAddSection = "Thêm nhóm"
+    override val haNewSection = "Nhóm mới"
+    override val haSectionName = "Tên nhóm"
+    override val haRenameSection = "Đổi tên nhóm"
+    override val haUntitledSection = "Nhóm không tên"
+    override fun haDeleteSectionQuestion(title: String, tiles: Int) =
+        if (tiles == 0) "Xoá “$title”?" else "Xoá “$title” và $tiles ô trong nhóm?"
+    override val haAddTile = "Thêm ô"
+    override val haRenameTile = "Đổi tên ô"
+    override val haTileName = "Tên ô"
+    override val haPickEntity = "Chọn thiết bị"
+    override val haSearchEntities = "Tìm theo tên hoặc mã"
+    override val haNothingToPick = "Mọi thiết bị đã có trên màn hình."
+    override val haNoEntityMatches = "Không có thiết bị nào khớp."
+    override fun haReorderSection(title: String) = "Đổi vị trí nhóm $title"
+    override fun haReorderTile(title: String) = "Đổi vị trí $title"
+    override fun haRemoveSection(title: String) = "Xoá nhóm $title"
+    override fun haRemoveTile(title: String) = "Bỏ $title"
+    override val haConditionalTile = "Chỉ hiện khi có điều kiện"
+    override val haTemplateTile = "Mẫu"
+    override val haBrightness = "Độ sáng"
+    override val haFanSpeed = "Tốc độ"
+    override val haOscillation = "Xoay"
+    override val haFanMode = "Chế độ"
+    override val haPower = "Nguồn"
+    override val haColor = "Màu"
+    override val haWhite = "Trắng"
 }
 
 enum class Language {

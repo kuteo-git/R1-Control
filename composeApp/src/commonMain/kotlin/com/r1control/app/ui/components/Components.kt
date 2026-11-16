@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,14 +55,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import coil3.compose.AsyncImage
 import com.r1control.app.domain.model.cleanPlaylistName
 import com.r1control.app.ui.i18n.describe
@@ -108,7 +116,11 @@ fun IconTap(
     }
 }
 
-/** The title bar: an optional back arrow, a title with a small line under it, and actions on the right. */
+/**
+ * The title bar: an optional back arrow, a title with a small line under it, and actions on the right.
+ * [titleContent] replaces the plain title line when a screen needs more than text there, such as a
+ * live status dot; the subtitle below it is unchanged.
+ */
 @Composable
 fun ScreenTopBar(
     title: String,
@@ -116,6 +128,7 @@ fun ScreenTopBar(
     modifier: Modifier = Modifier,
     backDescription: String? = null,
     onBack: () -> Unit = {},
+    titleContent: (@Composable () -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     Row(
@@ -129,7 +142,11 @@ fun ScreenTopBar(
             Spacer(Modifier.width(Space.Small))
         }
         Column(Modifier.weight(1f).padding(start = Space.Small), verticalArrangement = Arrangement.spacedBy(Space.Lines)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (titleContent != null) {
+                titleContent()
+            } else {
+                Text(title, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             if (subtitle.isNotEmpty()) {
                 Text(
                     subtitle,
@@ -237,6 +254,7 @@ fun R1TextField(
     maxLines: Int = 1,
     focusRequester: FocusRequester? = null,
     onFocusChanged: (Boolean) -> Unit = {},
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     trailing: @Composable () -> Unit = {},
 ) {
     Row(
@@ -287,6 +305,7 @@ fun R1TextField(
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 singleLine = singleLine,
                 maxLines = maxLines,
+                visualTransformation = visualTransformation,
                 keyboardOptions = keyboardOptions,
                 keyboardActions = KeyboardActions(onAny = { onDone?.invoke() }),
             )
@@ -614,4 +633,89 @@ fun R1Slider(
             }
         },
     )
+}
+
+/**
+ * A tall fill a finger drags up and down, 0 to 100, with the volume pill's relative feel: where the finger
+ * lands sets nothing, the travel does, so an accidental touch never jumps a light or fan. The fill follows
+ * [percent] until a drag takes hold, then stays where the finger left it until Home Assistant reports a new
+ * value. One value is sent when the drag ends ([onCommit]), not a flood while dragging. [icon] names the
+ * device (a bulb, a fan) and sits in the fill.
+ */
+@Composable
+fun VerticalLevelSlider(
+    percent: Int,
+    enabled: Boolean,
+    icon: ImageVector,
+    description: String,
+    valueText: (Int) -> String,
+    onCommit: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val haptics = LocalHaptics.current
+    // One stable state for the whole life of the slider. Keying a remember on [percent] would recreate it
+    // after each commit, orphaning the drag gesture's captured reference, so a second drag wrote nothing.
+    val shown = remember { mutableIntStateOf(percent) }
+    var dragging by remember { mutableStateOf(false) }
+    val commit by rememberUpdatedState(onCommit)
+    // Follow Home Assistant's value, except mid-drag so a push does not fight the finger.
+    LaunchedEffect(percent) { if (!dragging) shown.intValue = percent }
+    val notches = 20
+    Box(
+        modifier
+            .width(84.dp)
+            .height(168.dp)
+            .clip(RoundedCornerShape(Radius.Card))
+            .background(Tokens.Card)
+            .clearAndSetSemantics {
+                contentDescription = description
+                if (enabled) {
+                    stateDescription = valueText(shown.intValue)
+                    progressBarRangeInfo = ProgressBarRangeInfo(shown.intValue.toFloat(), 0f..100f, 0)
+                    setProgress { target ->
+                        commit(target.roundToInt())
+                        true
+                    }
+                } else {
+                    disabled()
+                }
+            }
+            .pointerInput(enabled) {
+                if (!enabled) return@pointerInput
+                var start = 0
+                var travelled = 0f
+                var felt = 0
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        dragging = true
+                        start = shown.intValue
+                        travelled = 0f
+                        felt = notchOf(shown.intValue.toFloat(), 0f..100f, notches)
+                    },
+                    onDragEnd = { commit(shown.intValue); dragging = false },
+                    onDragCancel = { commit(shown.intValue); dragging = false },
+                    onVerticalDrag = { change, dy ->
+                        change.consume()
+                        travelled -= dy
+                        val pct = fillAfterDrag(start, travelled, size.height.toFloat())
+                        val notch = notchOf(pct.toFloat(), 0f..100f, notches)
+                        notchFeel(felt, notch, notches)?.let(haptics::play)
+                        felt = notch
+                        shown.intValue = pct
+                    },
+                )
+            },
+    ) {
+        if (enabled) {
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(shown.intValue / 100f).background(Tokens.VolumeFill))
+        }
+        Column(
+            Modifier.fillMaxSize().padding(vertical = Space.Large),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(if (enabled) valueText(shown.intValue) else "", style = MaterialTheme.typography.titleMedium, color = Tokens.Accent)
+            R1Icon(icon, null, tint = Tokens.Accent, size = 28.dp)
+        }
+    }
 }

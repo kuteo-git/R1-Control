@@ -12,6 +12,16 @@ interface SettingsDataSource {
 
 object SettingsKeys {
     const val ADDRESS = "r1.address"
+    const val HA_ADDRESS = "ha.address"
+
+    /** A secret: a long-lived Home Assistant token. Never logged, never shown back raw. */
+    const val HA_TOKEN = "ha.token"
+
+    /** The dashboard layout the person edits, as JSON. */
+    const val HA_LAYOUT = "ha.layout"
+
+    /** An unreadable [HA_LAYOUT] value is copied here once and never overwritten, so the person's work is not lost to a reseed. */
+    const val HA_LAYOUT_BACKUP = "ha.layout.backup"
     const val RECENT_SEARCHES = "music.recentSearches"
     const val PLAYLISTS = "music.playlists"
 

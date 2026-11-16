@@ -2,7 +2,14 @@ package com.r1control.app.ui
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -51,8 +58,17 @@ import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.ScreenTopBar
 import com.r1control.app.ui.components.rememberPlatformHaptics
 import com.r1control.app.ui.control.ControlScreen
+import com.r1control.app.ui.ha.HaEditButton
+import com.r1control.app.ui.ha.HaScreen
+import com.r1control.app.ui.ha.HaSettingsScreen
+import com.r1control.app.ui.ha.HaSettingsViewModel
 import com.r1control.app.ui.i18n.LocalStrings
+import com.r1control.app.domain.model.LanguageChoice
+import com.r1control.app.domain.model.ha.HaConnectionState
+import com.r1control.app.domain.usecase.SpeakerView
+import com.r1control.app.ui.ha.HaState
 import com.r1control.app.ui.i18n.Strings
+import com.r1control.app.ui.settings.CommonSettings
 import com.r1control.app.ui.i18n.deviceLanguage
 import com.r1control.app.ui.i18n.resolve
 import com.r1control.app.ui.icons.R1Icons
@@ -84,7 +100,7 @@ import com.r1control.app.ui.theme.R1Theme
 import com.r1control.app.ui.theme.Tokens
 
 private enum class Tab(val icon: ImageVector) {
-    Control(R1Icons.Speaker), Music(R1Icons.MusicNote), Chat(R1Icons.Chat)
+    Ha(R1Icons.Home), Control(R1Icons.Speaker), Settings(R1Icons.Gear)
 }
 
 /** Holds [AppModels] across rotations and recreation, with the activity's view model store. */
@@ -142,7 +158,7 @@ private fun Root(container: AppContainer, models: AppModels) {
 @Composable
 private fun Shell(container: AppContainer, models: AppModels, address: R1Address) {
     val strings = LocalStrings.current
-    var tabIndex by rememberSaveable { mutableStateOf(0) }
+    var tabIndex by rememberSaveable { mutableStateOf(Tab.Ha.ordinal) }
     var stack by rememberSaveable(stateSaver = PageStackSaver) { mutableStateOf(PageStack.Tabs) }
     val tab = Tab.entries[tabIndex]
     val page = stack.top
@@ -154,26 +170,63 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     val mini by models.mini.state.collectAsState()
     val shownMini = mini as? MiniState.Showing
     val haptics = LocalHaptics.current
+    val editButton by models.ha.editButton.collectAsState()
+    val haState by models.ha.state.collectAsState()
+    val haAddress by models.ha.address.collectAsState()
+    val speaker by models.feed.view.collectAsState()
+    val languageChoice by models.app.language.collectAsState()
 
     // The one back handler: Music pages use it too, and it returns to the page somebody was on.
     val back = { stack = stack.back() }
     BackHandler(page != null) { back() }
     val open = { next: Page -> stack = stack.open(next) }
     val goneFrom = { gone: Page -> stack = stack.without(gone) }
-    // The search is a tab, not a page, so going there closes the pages over the tabs.
-    val findSongs = { stack = PageStack.Tabs; tabIndex = Tab.Music.ordinal; models.music.askForSearch() }
+    // Music is a page now, opened from the top bar: a search opens it over whatever is up.
+    val findSongs = { stack = stack.open(Page.Music); models.music.askForSearch() }
     // A mini player over a page, or over the Music and Chat tabs; the tab bar only ever sits under the tabs.
     val miniUnderPage = page != null && page.keepsMiniPlayer && shownMini != null
 
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(
-            title = page?.title(strings, lists.playlists) ?: strings.speakerName,
-            subtitle = if (page == null) address.toString() else "",
+            title = page?.title(strings, lists.playlists) ?: when (tab) {
+                Tab.Ha -> strings.haTitle
+                Tab.Control -> strings.speakerName
+                Tab.Settings -> strings.settings
+            },
+            subtitle = when {
+                page != null -> ""
+                tab == Tab.Ha -> haAddress
+                tab == Tab.Control -> address.toString()
+                else -> ""
+            },
             modifier = Modifier.statusBarsPadding(),
             backDescription = if (page != null) strings.back else null,
             onBack = back,
+            titleContent = when {
+                page != null -> null
+                tab == Tab.Ha -> ({ HaTitle(haState, strings) })
+                tab == Tab.Control -> ({ TitleWithDot(strings.speakerName, speakerDot(speaker)) })
+                else -> null
+            },
             actions = {
-                if (page == null) IconTap(R1Icons.Gear, strings.settings, { open(Page.Settings(SettingsPage.Home)) }, iconSize = 26.dp)
+                // The right of the bar is the tab's own: Home Assistant its edit button and gear, R1 its
+                // Music, Chat and gear. The common Settings tab is itself settings, so it holds nothing.
+                if (page == null) when (tab) {
+                    Tab.Ha -> {
+                        when (editButton) {
+                            HaEditButton.Hidden -> Unit
+                            HaEditButton.Edit -> IconTap(R1Icons.Edit, strings.haEdit, models.ha::toggleEditing)
+                            HaEditButton.Done -> IconTap(R1Icons.Check, strings.haDoneEditing, models.ha::toggleEditing, tint = Tokens.Accent)
+                        }
+                        IconTap(R1Icons.Gear, strings.settings, { open(Page.HaSettings) }, iconSize = 26.dp)
+                    }
+                    Tab.Control -> {
+                        IconTap(R1Icons.MusicNote, strings.tabMusic, { open(Page.Music) })
+                        IconTap(R1Icons.Chat, strings.tabChat, { open(Page.Chat) })
+                        IconTap(R1Icons.Gear, strings.settings, { open(Page.Settings(SettingsPage.Home)) }, iconSize = 26.dp)
+                    }
+                    Tab.Settings -> Unit
+                }
             },
         )
         Box(
@@ -186,13 +239,13 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                     PageHost(shown, container, models, address, open, goneFrom, findSongs)
                 } else {
                     when (tab) {
+                        Tab.Ha -> HaScreen(models.ha, models.haSetup)
                         Tab.Control -> ControlScreen(
                             models.control,
                             onChangeAddress = { open(Page.Settings(SettingsPage.Advanced)) },
                             onOpenSongs = { open(Page.NowPlaying) },
                         )
-                        Tab.Music -> MusicScreen(models.music, onOpen = open)
-                        Tab.Chat -> ChatScreen(models.chat)
+                        Tab.Settings -> CommonSettings(languageChoice) { open(Page.Settings(it)) }
                     }
                 }
             }
@@ -239,10 +292,49 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
 
 private fun LocalContentColorOf(selected: Boolean) = if (selected) Tokens.OnGround else Tokens.OnGroundMuted
 
+/** A tab title with a live status dot: green when the thing it names is reachable, red when it is not. */
+@Composable
+private fun TitleWithDot(title: String, dot: Color, trailing: (@Composable () -> Unit)? = null) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, style = MaterialTheme.typography.headlineMedium, maxLines = 1)
+        Box(Modifier.size(10.dp).clip(CircleShape).background(dot))
+        trailing?.invoke()
+    }
+}
+
+/** The Home Assistant tab's title: "HA", the connection dot, then the live entity count once connected. */
+@Composable
+private fun HaTitle(state: HaState, strings: Strings) {
+    val live = state as? HaState.Live
+    val connection = live?.connection
+    val dot = when (connection) {
+        HaConnectionState.Connected -> Tokens.Online
+        HaConnectionState.Connecting -> Tokens.OnGroundMuted
+        else -> Tokens.Error
+    }
+    TitleWithDot(strings.tabHa, dot) {
+        if (connection == HaConnectionState.Connected && live != null) {
+            Text(
+                "(" + strings.haEntityCount(live.entities.size) + ")",
+                style = MaterialTheme.typography.titleSmall,
+                color = Tokens.OnGroundMuted,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** The R1 tab's dot: green while the speaker answers, grey while it is being read, red when it is offline. */
+private fun speakerDot(view: SpeakerView): Color = when (view) {
+    is SpeakerView.Online, is SpeakerView.Stale -> Tokens.Online
+    SpeakerView.Connecting -> Tokens.OnGroundMuted
+    is SpeakerView.Offline -> Tokens.Error
+}
+
 private fun labelOf(tab: Tab, strings: Strings): String = when (tab) {
+    Tab.Ha -> strings.tabHa
     Tab.Control -> strings.tabControl
-    Tab.Music -> strings.tabMusic
-    Tab.Chat -> strings.tabChat
+    Tab.Settings -> strings.settings
 }
 
 @Composable
@@ -262,7 +354,7 @@ private fun PageHost(
             is Page.Settings -> when (page.page) {
                 SettingsPage.Home -> SettingsHome(
                     remember { SettingsHomeViewModel(models.feed, container.voices, scope) },
-                    address.toString(), models.app.language,
+                    address.toString(),
                 ) { open(Page.Settings(it)) }
                 SettingsPage.Audio -> AudioScreen(
                     remember { AudioViewModel(container.speaker, scope, start = models.feed.view.value, onWrote = models.feed::refresh) },
@@ -288,6 +380,18 @@ private fun PageHost(
                     viewModel = remember { AdvancedViewModel(container.speaker, scope) },
                 )
             }
+            Page.HaSettings -> HaSettingsScreen(
+                remember {
+                    HaSettingsViewModel(container.haSettings, container.connectHa, scope) { signedIn ->
+                        models.ha.signedIn(signedIn)
+                        goneFrom(page)
+                    }
+                },
+                resyncState = models.ha.resync,
+                onResync = models.ha::resyncFromHa,
+            )
+            Page.Music -> MusicScreen(models.music, onOpen = open)
+            Page.Chat -> ChatScreen(models.chat)
             Page.AllPlaylists -> PlaylistsScreen(models.store, onOpen = open)
             Page.NowPlaying -> NowPlayingScreen(
                 models.nowPlaying,

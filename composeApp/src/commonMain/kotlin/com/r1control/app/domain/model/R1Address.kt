@@ -19,7 +19,10 @@ data class R1Address(val host: String, val port: Int) {
          * guessing: a guessed address fails later as "could not reach", which
          * names the wrong problem.
          */
-        fun parse(text: String): AddressInput {
+        fun parse(text: String): AddressInput = parseHostPort(text, DEFAULT_PORT)
+
+        /** [parse] for a server whose default port is not the R1's (Home Assistant's 8123). */
+        internal fun parseHostPort(text: String, defaultPort: Int): AddressInput {
             var rest = text.trim()
             if (rest.isEmpty()) return AddressInput.Invalid(AddressInput.Reason.Empty)
             if (rest.startsWith("http://", ignoreCase = true)) rest = rest.substring("http://".length)
@@ -33,7 +36,7 @@ data class R1Address(val host: String, val port: Int) {
 
             if (!isHost(host)) return AddressInput.Invalid(AddressInput.Reason.BadHost)
             val port = when {
-                colon < 0 -> DEFAULT_PORT
+                colon < 0 -> defaultPort
                 portText.isEmpty() || !portText.all { it in '0'..'9' } || portText.length > 5 ->
                     return AddressInput.Invalid(AddressInput.Reason.BadPort)
                 else -> portText.toInt()

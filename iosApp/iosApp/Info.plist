@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>R1 Control</string>
+	<string>Control</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +28,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 
-	<!-- The R1 speaks plain HTTP on the house wifi. NSAllowsLocalNetworking
+	<!-- The R1 and Home Assistant speak plain HTTP and ws:// on the house wifi. NSAllowsLocalNetworking
 	     covers IP addresses, .local and dotless names; a router's own names
 	     (r1.lan, r1.home.arpa), which the address field accepts, need their
 	     suffix listed. Only suffixes that never leave the house are. -->
@@ -56,7 +56,7 @@
 	</dict>
 	<!-- In both languages: the prompt has no Vietnamese otherwise. -->
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>R1 Control điều khiển loa R1 trong wifi nhà. (R1 Control talks to your R1 speaker on the house wifi.)</string>
+	<string>Control điều khiển loa R1 và Home Assistant trong wifi nhà. (Control talks to your R1 speaker and Home Assistant on the house wifi.)</string>
 	<!-- The ground colour, so a cold start is not a white flash before the dark app. -->
 	<key>UILaunchScreen</key>
 	<dict>

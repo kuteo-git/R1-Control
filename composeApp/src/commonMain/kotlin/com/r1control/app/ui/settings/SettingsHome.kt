@@ -31,7 +31,6 @@ import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.Strings
 import com.r1control.app.ui.i18n.VietnameseStrings
 import com.r1control.app.ui.i18n.languageChoiceName
-import kotlinx.coroutines.flow.StateFlow
 import com.r1control.app.domain.model.LanguageChoice
 import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.theme.R1Theme
@@ -53,14 +52,22 @@ fun SettingsPage.title(strings: Strings): String = when (this) {
 }
 
 @Composable
-fun SettingsHome(viewModel: SettingsHomeViewModel, address: String, language: StateFlow<LanguageChoice>, onOpen: (SettingsPage) -> Unit) {
+fun SettingsHome(viewModel: SettingsHomeViewModel, address: String, onOpen: (SettingsPage) -> Unit) {
     val summary by viewModel.state.collectAsState()
-    val choice by language.collectAsState()
-    SettingsHomeContent(summary, address, choice, onOpen)
+    SettingsHomeContent(summary, address, onOpen)
+}
+
+/** The common settings tab: settings that are neither the speaker's nor Home Assistant's. The language now, theming and more later. */
+@Composable
+fun CommonSettings(language: LanguageChoice, onOpen: (SettingsPage) -> Unit) {
+    val strings = LocalStrings.current
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        SettingsRow(R1Icons.Language, strings.settingsLanguage, { onOpen(SettingsPage.Language) }, subtitle = strings.languageChoiceName(language))
+    }
 }
 
 @Composable
-fun SettingsHomeContent(summary: Loadable<SettingsSummary>, address: String, language: LanguageChoice, onOpen: (SettingsPage) -> Unit) {
+fun SettingsHomeContent(summary: Loadable<SettingsSummary>, address: String, onOpen: (SettingsPage) -> Unit) {
     val strings = LocalStrings.current
     // Until the values arrive, or if they cannot, the rows are still the way in: they just say less.
     val known = (summary as? Loadable.Loaded)?.value
@@ -78,7 +85,6 @@ fun SettingsHomeContent(summary: Loadable<SettingsSummary>, address: String, lan
             R1Icons.Bluetooth, strings.settingsBluetooth, { onOpen(SettingsPage.Bluetooth) },
             subtitle = known?.let { bluetoothLine(it.bluetooth, strings) }.orEmpty(),
         )
-        SettingsRow(R1Icons.Language, strings.settingsLanguage, { onOpen(SettingsPage.Language) }, subtitle = strings.languageChoiceName(language))
         SettingsRow(R1Icons.Tune, strings.settingsAdvanced, { onOpen(SettingsPage.Advanced) }, subtitle = address)
     }
 }
@@ -130,13 +136,17 @@ private val summary = SettingsSummary(
 
 @Preview
 @Composable
-private fun SettingsHomePreview() = PreviewHost(EnglishStrings) { SettingsHomeContent(Loadable.Loaded(summary), "10.25.113.209:8088", LanguageChoice.FollowPhone) {} }
+private fun SettingsHomePreview() = PreviewHost(EnglishStrings) { SettingsHomeContent(Loadable.Loaded(summary), "10.25.113.209:8088") {} }
 
 @Preview
 @Composable
-private fun SettingsHomeLoadingPreview() = PreviewHost(EnglishStrings) { SettingsHomeContent(Loadable.Loading, "10.25.113.209:8088", LanguageChoice.English) {} }
+private fun SettingsHomeLoadingPreview() = PreviewHost(EnglishStrings) { SettingsHomeContent(Loadable.Loading, "10.25.113.209:8088") {} }
 
 @Preview
 @Composable
 private fun SettingsHomeVietnamesePreview() =
-    PreviewHost(VietnameseStrings) { SettingsHomeContent(Loadable.Loaded(summary), "10.25.113.209:8088", LanguageChoice.FollowPhone) {} }
+    PreviewHost(VietnameseStrings) { SettingsHomeContent(Loadable.Loaded(summary), "10.25.113.209:8088") {} }
+
+@Preview
+@Composable
+private fun CommonSettingsPreview() = PreviewHost(EnglishStrings) { CommonSettings(LanguageChoice.FollowPhone) {} }
