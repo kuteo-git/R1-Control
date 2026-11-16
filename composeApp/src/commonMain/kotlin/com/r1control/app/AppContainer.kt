@@ -50,9 +50,14 @@ class AppContainer(
     val sendChat = SendChat(speaker)
     val saveAddress = SaveAddress(speaker, preferences)
 
-    /** The Home Assistant link outlives every screen, so it runs in a scope of its own, on the main thread. */
+    /**
+     * The Home Assistant link outlives every screen, so it runs in a scope of its own. On a background
+     * dispatcher, not the main thread: a house with hundreds of entities pushes a stream of state deltas, and
+     * parsing each and copying the whole entity map on the main thread starved taps, so a command took
+     * seconds to go out.
+     */
     val haSettings: HaSettingsRepository = SettingsHaSettingsRepository(settings)
-    val ha: HaRepository = WebSocketHaRepository(haClient, CoroutineScope(SupervisorJob() + Dispatchers.Main))
+    val ha: HaRepository = WebSocketHaRepository(haClient, CoroutineScope(SupervisorJob() + Dispatchers.Default))
     val connectHa = ConnectHa(ha, haSettings)
 
     /** The dashboard the person builds: kept on the phone, and only ever seeded from Home Assistant's. */
