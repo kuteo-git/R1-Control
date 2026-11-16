@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
@@ -161,6 +162,8 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     var tabIndex by rememberSaveable { mutableStateOf(Tab.Ha.ordinal) }
     var stack by rememberSaveable(stateSaver = PageStackSaver) { mutableStateOf(PageStack.Tabs) }
     val tab = Tab.entries[tabIndex]
+    // Each tab keeps its own scroll: a tab left for another one holds its position and has it back on return.
+    val tabState = rememberSaveableStateHolder()
     val page = stack.top
     val lists by models.store.state.collectAsState()
     // The keyboard covers the tab bar rather than hiding it (a hidden bar blinks back after the
@@ -238,14 +241,16 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                 if (shown != null) {
                     PageHost(shown, container, models, address, open, goneFrom, findSongs)
                 } else {
-                    when (tab) {
-                        Tab.Ha -> HaScreen(models.ha, models.haSetup)
-                        Tab.Control -> ControlScreen(
-                            models.control,
-                            onChangeAddress = { open(Page.Settings(SettingsPage.Advanced)) },
-                            onOpenSongs = { open(Page.NowPlaying) },
-                        )
-                        Tab.Settings -> CommonSettings(languageChoice) { open(Page.Settings(it)) }
+                    tabState.SaveableStateProvider(tab.name) {
+                        when (tab) {
+                            Tab.Ha -> HaScreen(models.ha, models.haSetup)
+                            Tab.Control -> ControlScreen(
+                                models.control,
+                                onChangeAddress = { open(Page.Settings(SettingsPage.Advanced)) },
+                                onOpenSongs = { open(Page.NowPlaying) },
+                            )
+                            Tab.Settings -> CommonSettings(languageChoice) { open(Page.Settings(it)) }
+                        }
                     }
                 }
             }
