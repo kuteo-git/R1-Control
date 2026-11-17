@@ -64,6 +64,10 @@ class FakeHa : HaRepository {
         configFailure?.let { throw it }
         return config
     }
+
+    var cameraStreamPath = "/api/hls/token/master.m3u8"
+
+    override suspend fun cameraStreamPath(entityId: HaEntityId): String = cameraStreamPath
 }
 
 class MemoryHaSettings(var saved: SavedHaAddress = SavedHaAddress.Unset) : HaSettingsRepository {

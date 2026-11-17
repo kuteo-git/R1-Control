@@ -7,6 +7,8 @@ import com.r1control.app.data.remote.KtorHaSocketOpener
 import com.r1control.app.data.remote.applying
 import com.r1control.app.data.remote.authFrame
 import com.r1control.app.data.remote.callServiceFrame
+import com.r1control.app.data.remote.cameraStreamFrame
+import com.r1control.app.data.remote.cameraStreamUrlFrom
 import com.r1control.app.data.remote.lovelaceConfigFrame
 import com.r1control.app.data.remote.parseHaMessage
 import com.r1control.app.data.remote.pingFrame
@@ -100,6 +102,9 @@ class WebSocketHaRepository internal constructor(
     }
 
     override suspend fun dashboardConfig(): String = request { id -> lovelaceConfigFrame(id) }.payload
+
+    override suspend fun cameraStreamPath(entityId: HaEntityId): String =
+        cameraStreamUrlFrom(request { id -> cameraStreamFrame(id, entityId.value) }.payload)
 
     /**
      * One `render_template` subscription per collection. Its events are routed to this collector by id

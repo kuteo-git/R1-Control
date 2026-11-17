@@ -31,6 +31,13 @@ interface HaRepository {
     suspend fun dashboardConfig(): String
 
     /**
+     * Starts an HLS stream of the camera [entityId] and returns the playlist's path on the server
+     * (`/api/hls/.../master.m3u8`), which the caller prefixes with the server address to play. Throws
+     * [HaException] when the link is down or the camera cannot stream.
+     */
+    suspend fun cameraStreamPath(entityId: HaEntityId): String
+
+    /**
      * Home Assistant renders the Jinja [template] and says so again whenever the result changes: the first
      * emission is the text now, each later one a change. Collecting opens the subscription and stopping
      * the collection closes it. The flow ends, without throwing, when the link is not open or goes down,

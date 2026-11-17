@@ -13,6 +13,8 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 // Home Assistant's WebSocket protocol, read at the boundary: a text frame becomes an
@@ -180,6 +182,21 @@ internal fun renderTemplateFrame(id: Int, template: String): String = buildJsonO
     put("type", "render_template")
     put("template", template)
 }.toString()
+
+/** Asks Home Assistant to start an HLS stream of [entityId]; the result carries the playlist path under `url`. */
+internal fun cameraStreamFrame(id: Int, entityId: String): String = buildJsonObject {
+    put("id", id)
+    put("type", "camera/stream")
+    put("entity_id", entityId)
+    put("format", "hls")
+}.toString()
+
+/** The playlist path from a `camera/stream` result ([payload] is its `result` object), or empty when it carries none. */
+internal fun cameraStreamUrlFrom(payload: String): String = try {
+    Json.parseToJsonElement(payload).jsonObject["url"]?.jsonPrimitive?.contentOrNull.orEmpty()
+} catch (_: Exception) {
+    ""
+}
 
 /** Ends the subscription [subscription], which was made by the command with that id. */
 internal fun unsubscribeEventsFrame(id: Int, subscription: Int): String = buildJsonObject {
