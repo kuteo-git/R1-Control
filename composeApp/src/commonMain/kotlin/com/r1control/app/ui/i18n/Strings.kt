@@ -96,6 +96,7 @@ interface Strings {
 
     // shared
     val close: String
+    val live: String
     val clear: String
     val save: String
 
@@ -399,6 +400,7 @@ object EnglishStrings : Strings {
     }
 
     override val close = "Close"
+    override val live = "LIVE"
     override val clear = "Clear"
     override val save = "Save"
 
@@ -702,6 +704,7 @@ object VietnameseStrings : Strings {
     }
 
     override val close = "Đóng"
+    override val live = "TRỰC TIẾP"
     override val clear = "Xoá"
     override val save = "Lưu"
 
