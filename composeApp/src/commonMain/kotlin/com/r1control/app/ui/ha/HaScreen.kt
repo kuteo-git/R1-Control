@@ -71,7 +71,13 @@ fun HaScreen(viewModel: HaViewModel, setup: HaSettingsViewModel) {
             viewModel::addTile, viewModel::renameTile, viewModel::deleteTile, viewModel::moveRow,
         )
     }
-    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit)
+    val tabActions = remember(viewModel) {
+        HaTabActions(
+            viewModel::selectTab, viewModel::addTab, viewModel::renameTab,
+            viewModel::setTabIcon, viewModel::deleteTab, viewModel::moveTab,
+        )
+    }
+    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit, tabActions)
     val target by viewModel.controlTarget.collectAsState()
     val controls = remember(viewModel) {
         HaControlActions(
@@ -96,22 +102,25 @@ fun HaContent(
     onConnect: () -> Unit,
     actions: HaTileActions,
     edit: HaEditActions,
+    tabs: HaTabActions = HaTabActions.None,
 ) {
     when (state) {
         HaState.Loading -> LoadingBox()
         HaState.NeedsSetup -> HaSetupContent(address, token, status, false, onAddress, onToken, onConnect)
         HaState.TokenRefused -> HaSetupContent(address, token, status, true, onAddress, onToken, onConnect)
-        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit)
+        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit, tabs)
     }
 }
 
 @Composable
-private fun HaLive(state: HaState.Live, baseUrl: String, actions: HaTileActions, edit: HaEditActions) {
+private fun HaLive(state: HaState.Live, baseUrl: String, actions: HaTileActions, edit: HaEditActions, tabActions: HaTabActions) {
     val strings = LocalStrings.current
     val connected = state.connection == HaConnectionState.Connected
     val dashboard = state.dashboard
     // The connection dot and the entity count live in the tab's title now, not on a line here.
     Column(Modifier.fillMaxSize()) {
+        // More than one tab earns a bar to switch between them; a lone tab shows none.
+        state.tabs?.takeIf { it.tabs.size > 1 }?.let { HaTabBar(it, tabActions.onSelect) }
         when {
             dashboard != null && state.editing -> HaEditList(dashboard, state.entities, edit)
             dashboard != null && dashboard.tileCount > 0 -> {

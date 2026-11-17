@@ -267,6 +267,12 @@ interface Strings {
     val haDoneEditing: String
     val haEmptyEdit: String
     val haStartEmpty: String
+    val haTabUntitled: String
+    val haTabAdd: String
+    val haTabRename: String
+    val haTabChooseIcon: String
+    val haTabDeleteTitle: String
+    val haTabDeleteBody: String
     val haAddSection: String
     val haNewSection: String
     val haSectionName: String
@@ -574,6 +580,12 @@ object EnglishStrings : Strings {
     override val haDoneEditing = "Done editing"
     override val haEmptyEdit = "Nothing here yet. Add a section, then add tiles to it."
     override val haStartEmpty = "Build my own dashboard"
+    override val haTabUntitled = "Tab"
+    override val haTabAdd = "Add tab"
+    override val haTabRename = "Tab name"
+    override val haTabChooseIcon = "Choose an icon"
+    override val haTabDeleteTitle = "Delete this tab?"
+    override val haTabDeleteBody = "The tab and everything in it is removed from this phone. Home Assistant is not changed."
     override val haAddSection = "Add section"
     override val haNewSection = "New section"
     override val haSectionName = "Section name"
@@ -871,6 +883,12 @@ object VietnameseStrings : Strings {
     override val haDoneEditing = "Xong"
     override val haEmptyEdit = "Chưa có gì. Hãy thêm một nhóm, rồi thêm ô vào nhóm đó."
     override val haStartEmpty = "Tự tạo màn hình"
+    override val haTabUntitled = "Thẻ"
+    override val haTabAdd = "Thêm thẻ"
+    override val haTabRename = "Tên thẻ"
+    override val haTabChooseIcon = "Chọn biểu tượng"
+    override val haTabDeleteTitle = "Xoá thẻ này?"
+    override val haTabDeleteBody = "Thẻ và mọi thứ trong nó sẽ bị gỡ khỏi điện thoại này. Home Assistant không thay đổi."
     override val haAddSection = "Thêm nhóm"
     override val haNewSection = "Nhóm mới"
     override val haSectionName = "Tên nhóm"
