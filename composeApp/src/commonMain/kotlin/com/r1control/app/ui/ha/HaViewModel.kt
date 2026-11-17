@@ -8,11 +8,21 @@ import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaServiceCall
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.HaDashboard
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.SavedHaAddress
 import com.r1control.app.domain.model.ha.SectionId
+import com.r1control.app.domain.model.ha.TabId
 import com.r1control.app.domain.model.ha.TileId
 import com.r1control.app.domain.model.ha.addSection
+import com.r1control.app.domain.model.ha.addTab
 import com.r1control.app.domain.model.ha.addTile
+import com.r1control.app.domain.model.ha.deleteTab
+import com.r1control.app.domain.model.ha.moveTab
+import com.r1control.app.domain.model.ha.nextTabId
+import com.r1control.app.domain.model.ha.onCurrent
+import com.r1control.app.domain.model.ha.renameTab
+import com.r1control.app.domain.model.ha.selectTab
+import com.r1control.app.domain.model.ha.setTabIcon
 import com.r1control.app.domain.model.ha.HaRgb
 import com.r1control.app.domain.model.ha.brightnessCall
 import com.r1control.app.domain.model.ha.colorCall
@@ -70,18 +80,21 @@ sealed interface HaState {
     data object TokenRefused : HaState
 
     /**
-     * [entities] are in list order. [dashboard] is the person's own layout: null until it is known (read from
-     * the phone, or seeded once from Home Assistant's), and it stays null when there was none and Home
-     * Assistant's could not be read ([dashboardFailed]); the screen then falls back to the list of entities.
-     * [editing] is only ever true with a [dashboard] to edit.
+     * [entities] are in list order. [tabs] is the person's own layout: null until it is known (read from the
+     * phone, or seeded once from Home Assistant's), and it stays null when there was none and Home Assistant's
+     * could not be read ([dashboardFailed]); the screen then falls back to the list of entities. [dashboard]
+     * is the open tab's, the body under the tab bar. [editing] is only ever true with [tabs] to edit.
      */
     data class Live(
         val connection: HaConnectionState,
         val entities: List<HaEntity>,
-        val dashboard: HaDashboard?,
+        val tabs: HaTabs?,
         val dashboardFailed: Boolean,
         val editing: Boolean,
-    ) : HaState
+    ) : HaState {
+        /** The open tab's dashboard, or null when the layout is unknown or empty of tabs. */
+        val dashboard: HaDashboard? get() = tabs?.current?.dashboard
+    }
 }
 
 /**
@@ -92,7 +105,7 @@ sealed interface HaState {
 sealed interface HaDashboardLoad {
     data object Pending : HaDashboardLoad
     data object Failed : HaDashboardLoad
-    data class Loaded(val dashboard: HaDashboard) : HaDashboardLoad
+    data class Loaded(val tabs: HaTabs) : HaDashboardLoad
 }
 
 /** What is known of the saved connection: not read yet, or read. */
@@ -108,7 +121,7 @@ enum class HaEditButton { Hidden, Edit, Done }
 enum class HaResync { Idle, Running, Done, Failed }
 
 fun editButtonOf(state: HaState): HaEditButton = when {
-    state !is HaState.Live || state.dashboard == null -> HaEditButton.Hidden
+    state !is HaState.Live || state.tabs == null -> HaEditButton.Hidden
     state.editing -> HaEditButton.Done
     else -> HaEditButton.Edit
 }
@@ -138,7 +151,7 @@ fun haStateOf(
             else HaState.Live(
                 connection,
                 entities.values.toList().sortedForList(),
-                (dashboard as? HaDashboardLoad.Loaded)?.dashboard,
+                (dashboard as? HaDashboardLoad.Loaded)?.tabs,
                 dashboard == HaDashboardLoad.Failed,
                 editing && dashboard is HaDashboardLoad.Loaded,
             )
@@ -173,7 +186,7 @@ class HaViewModel(
     private val editing = MutableStateFlow(false)
 
     /** The newest layout not yet written. A write that finds a newer one waiting takes that instead, so the saved layout converges on the last edit. */
-    private val unsaved = MutableStateFlow<HaDashboard?>(null)
+    private val unsaved = MutableStateFlow<HaTabs?>(null)
 
     private val resyncState = MutableStateFlow(HaResync.Idle)
 
@@ -307,10 +320,10 @@ class HaViewModel(
 
     // ---- the layout ----
 
-    /** Home Assistant's own dashboard, read once to give a first layout. */
+    /** Home Assistant's own dashboard, read once to give a first layout: one tab holding it. */
     private suspend fun seed() {
         dashboard.value = try {
-            HaDashboardLoad.Loaded(importDashboard(ha.dashboardConfig())).also { unsaved.value = it.dashboard }
+            HaDashboardLoad.Loaded(HaTabs.of(importDashboard(ha.dashboardConfig()))).also { unsaved.value = it.tabs }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -328,7 +341,7 @@ class HaViewModel(
         scope.launch {
             resyncState.value = HaResync.Running
             resyncState.value = try {
-                val fresh = importDashboard(ha.dashboardConfig())
+                val fresh = HaTabs.of(importDashboard(ha.dashboardConfig()))
                 editing.value = false
                 dashboard.value = HaDashboardLoad.Loaded(fresh)
                 unsaved.value = fresh
@@ -341,11 +354,12 @@ class HaViewModel(
         }
     }
 
-    /** For a household whose Home Assistant has no dashboard to seed from: an empty layout to build. */
+    /** For a household whose Home Assistant has no dashboard to seed from: one empty tab to build. */
     fun startEmpty() {
         if (dashboard.value is HaDashboardLoad.Loaded) return
-        dashboard.value = HaDashboardLoad.Loaded(HaDashboard.Empty)
-        unsaved.value = HaDashboard.Empty
+        val empty = HaTabs.of(HaDashboard.Empty)
+        dashboard.value = HaDashboardLoad.Loaded(empty)
+        unsaved.value = empty
         editing.value = true
     }
 
@@ -373,10 +387,31 @@ class HaViewModel(
     /** A drag in the edit list: [from] and [to] are rows of `editRows`. */
     fun moveRow(from: Int, to: Int) = edit { moveRow(from, to) }
 
-    private fun edit(change: HaDashboard.() -> HaDashboard) {
+    // ---- the tabs ----
+
+    /** Opens a tab. A view action, not an edit, so it works without the edit mode. */
+    fun selectTab(id: TabId) = editTabs { selectTab(id) }
+
+    /** Adds a new, empty, selected tab. */
+    fun addTab(name: String, icon: String) = editTabs { addTab(nextTabId(), name.trim(), icon) }
+
+    fun renameTab(id: TabId, name: String) = editTabs { renameTab(id, name.trim()) }
+
+    fun setTabIcon(id: TabId, icon: String) = editTabs { setTabIcon(id, icon) }
+
+    /** Deletes a tab and its whole dashboard. The caller guards the last tab; the domain allows removing it. */
+    fun deleteTab(id: TabId) = editTabs { deleteTab(id) }
+
+    fun moveTab(from: Int, to: Int) = editTabs { moveTab(from, to) }
+
+    /** A per-tab layout edit, applied to the open tab's dashboard. */
+    private fun edit(change: HaDashboard.() -> HaDashboard) = editTabs { onCurrent { it.change() } }
+
+    /** A tab-level edit: which tabs there are, and which is open. The one place a change is saved. */
+    private fun editTabs(change: HaTabs.() -> HaTabs) {
         val loaded = dashboard.value as? HaDashboardLoad.Loaded ?: return
-        val next = loaded.dashboard.change()
-        if (next == loaded.dashboard) return
+        val next = loaded.tabs.change()
+        if (next == loaded.tabs) return
         dashboard.update { HaDashboardLoad.Loaded(next) }
         unsaved.value = next
     }

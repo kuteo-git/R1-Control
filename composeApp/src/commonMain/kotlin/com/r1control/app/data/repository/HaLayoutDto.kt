@@ -6,22 +6,37 @@ import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.HaServiceCall
+import com.r1control.app.domain.model.ha.HaTab
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.SectionId
+import com.r1control.app.domain.model.ha.TabId
 import com.r1control.app.domain.model.ha.TileId
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-// The dashboard layout as it is stored. The domain model carries no wire annotation, so these shapes
-// mirror it here and the mappers are the only place that knows both. Nothing in this file prints a value:
-// a layout holds the household's device names.
+// The tabs layout as it is stored. The domain model carries no wire annotation, so these shapes mirror it
+// here and the mappers are the only place that knows both. Nothing in this file prints a value: a layout
+// holds the household's device names.
 
+/**
+ * Version 2 holds the tabs. Version 1 held one dashboard as top-level [sections] and no [tabs]; it is read
+ * by migrating those sections into a single tab, so an older phone's layout survives the upgrade.
+ */
 @Serializable
-internal data class LayoutDto(val version: Int = VERSION, val sections: List<SectionDto>) {
+internal data class LayoutDto(
+    val version: Int = VERSION,
+    val tabs: List<TabDto> = emptyList(),
+    val selected: String = "",
+    val sections: List<SectionDto> = emptyList(),
+) {
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
     }
 }
+
+@Serializable
+internal data class TabDto(val id: String, val name: String = "", val icon: String = "", val sections: List<SectionDto>)
 
 @Serializable
 internal data class SectionDto(val id: String, val title: String, val tiles: List<TileDto>)
@@ -60,19 +75,38 @@ internal data class AttributeDto(val type: String, val text: String = "", val nu
 
 private val layoutJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-internal fun encodeLayout(dashboard: HaDashboard): String = layoutJson.encodeToString(LayoutDto.serializer(), dashboard.toDto())
+internal fun encodeTabs(tabs: HaTabs): String = layoutJson.encodeToString(LayoutDto.serializer(), tabs.toDto())
 
-/** Null when [text] is not a layout this app wrote: not JSON, a newer version, or a tile of a kind it does not know. */
-internal fun decodeLayout(text: String): HaDashboard? = try {
+/**
+ * Null when [text] is not a layout this app wrote: not JSON, a newer version than this app knows, or a tile
+ * of a kind it does not know. A version 1 layout (top-level sections, no tabs) migrates to one tab.
+ */
+internal fun decodeTabs(text: String): HaTabs? = try {
     val dto = layoutJson.decodeFromString(LayoutDto.serializer(), text)
-    if (dto.version == LayoutDto.VERSION) dto.toDomain() else null
+    when {
+        dto.version > LayoutDto.VERSION -> null
+        dto.tabs.isNotEmpty() -> {
+            val tabs = dto.tabs.map { it.toDomain() }
+            HaTabs(tabs, tabs.firstOrNull { it.id.value == dto.selected }?.id ?: tabs.first().id)
+        }
+        else -> HaTabs.of(HaDashboard(dto.sections.map { it.toDomain() }))
+    }
 } catch (_: Exception) {
     null
 }
 
-private fun HaDashboard.toDto() = LayoutDto(
-    sections = sections.map { s -> SectionDto(s.id.value, s.title, s.tiles.map { it.toDto() }) },
+private fun HaTabs.toDto() = LayoutDto(
+    tabs = tabs.map { it.toDto() },
+    selected = selected.value,
 )
+
+private fun HaTab.toDto() = TabDto(id.value, name, icon, dashboard.sections.map { it.toDto() })
+
+private fun TabDto.toDomain() = HaTab(TabId(id), name, icon, HaDashboard(sections.map { it.toDomain() }))
+
+private fun HaSection.toDto() = SectionDto(id.value, title, tiles.map { it.toDto() })
+
+private fun SectionDto.toDomain() = HaSection(SectionId(id), title, tiles.map { it.toDomain() })
 
 private fun HaTile.toDto(): TileDto {
     val base = TileDto(kind(), id.value, name, icon, entity.value, condition = condition.toDto())
@@ -121,11 +155,7 @@ private fun HaAttribute.toDto(): AttributeDto = when (this) {
     is HaAttribute.Structured -> AttributeDto("json", text = json)
 }
 
-private fun LayoutDto.toDomain() = HaDashboard(
-    sections.map { s -> HaSection(SectionId(s.id), s.title, s.tiles.map { it.toDomain() }) },
-)
-
-/** Throws for a kind this app does not know, which [decodeLayout] reads as an unreadable layout. */
+/** Throws for a kind this app does not know, which [decodeTabs] reads as an unreadable layout. */
 private fun TileDto.toDomain(): HaTile {
     val tile = TileId(id)
     val about = HaEntityId(entity)

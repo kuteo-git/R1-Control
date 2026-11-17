@@ -10,6 +10,7 @@ import com.r1control.app.domain.model.ha.HaServiceCall
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.TileId
 import com.r1control.app.domain.model.ha.HaDashboard
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.isUnavailableWith
@@ -158,7 +159,7 @@ class HaDashboardViewModelTest {
 
     @Test fun theFirstSeedIsSavedOnThePhone() = runTest {
         val live = model().live()
-        assertEquals(live.dashboard, layout.saved)
+        assertEquals(live.dashboard, layout.savedDashboard())
     }
 
     @Test fun nothingIsReadWhileTheLinkIsNotUp() = runTest {
@@ -212,7 +213,7 @@ class HaDashboardViewModelTest {
         val live = vm.live()
         assertEquals(HaDashboard.Empty, live.dashboard)
         assertTrue(live.editing)
-        assertEquals(HaDashboard.Empty, layout.saved)
+        assertEquals(HaDashboard.Empty, layout.savedDashboard())
     }
 
     @Test fun theDashboardStaysWhileTheLinkIsDown() = runTest {
@@ -308,6 +309,12 @@ private val SAVED_LAYOUT = HaDashboard(
     ),
 )
 
+/** The saved layout as the one tab it lives in on the phone. */
+private val SAVED_TABS = HaTabs.of(SAVED_LAYOUT)
+
+/** The open tab's dashboard, for a test that compares what was saved against the dashboard on screen. */
+private fun MemoryHaLayout.savedDashboard(): HaDashboard? = saved?.current?.dashboard
+
 /** The layout is the person's: read from the phone, seeded from Home Assistant only when there is none. */
 class HaLayoutReconcileTest {
     private val ha = FakeHa().also { it.config = KITCHEN_CONFIG }
@@ -322,14 +329,14 @@ class HaLayoutReconcileTest {
     private fun HaViewModel.live() = assertIs<HaState.Live>(state.value)
 
     @Test fun aSavedLayoutBeatsHomeAssistantsDashboard() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         assertEquals(SAVED_LAYOUT, vm.live().dashboard)
         assertEquals(0, layout.saves)
     }
 
     @Test fun aSavedLayoutIsNeverReadFromHomeAssistantEvenOnAFreshConnection() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         foreground.set(false)
         runCurrent()
@@ -343,19 +350,19 @@ class HaLayoutReconcileTest {
         val layout = MemoryHaLayout()
         val vm = model(layout)
         assertEquals(listOf("Kitchen"), assertNotNull(vm.live().dashboard).sections.map { it.title })
-        assertEquals(vm.live().dashboard, layout.saved)
+        assertEquals(vm.live().dashboard, layout.savedDashboard())
     }
 
     @Test fun aSavedLayoutShowsWithTheLinkDownAndNothingElseToGoOn() = runTest {
         ha.answer = HaConnectionState.Unreachable
-        val live = model(MemoryHaLayout(SAVED_LAYOUT)).live()
+        val live = model(MemoryHaLayout(SAVED_TABS)).live()
         assertEquals(SAVED_LAYOUT, live.dashboard)
         assertEquals(emptyList(), live.entities)
     }
 
     @Test fun anEntityHomeAssistantDoesNotKnowKeepsItsTileAndIsUnavailable() = runTest {
         ha.map.value = mapOf(HaEntityId("light.lamp") to entity("light.lamp", "Lamp"))
-        val live = model(MemoryHaLayout(SAVED_LAYOUT)).live()
+        val live = model(MemoryHaLayout(SAVED_TABS)).live()
         val tiles = assertNotNull(live.dashboard).sections.single().tiles
         val byId = live.entities.associateBy { it.id }
         assertEquals(listOf(false, true), tiles.map { it.isUnavailableWith(byId[it.entity]) })
@@ -374,28 +381,28 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun anEditIsSavedAtOnce() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         vm.addSection("Hall")
         runCurrent()
         assertEquals(listOf("Mine", "Hall"), assertNotNull(vm.live().dashboard).sections.map { it.title })
-        assertEquals(vm.live().dashboard, layout.saved)
+        assertEquals(vm.live().dashboard, layout.savedDashboard())
     }
 
     @Test fun aRunOfEditsEndsWithTheLastOneSaved() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         vm.addSection("A")
         vm.addSection("B")
         vm.renameSection(SectionId("s0"), "Renamed")
         vm.deleteTile(TileId("t1"))
         runCurrent()
-        assertEquals(vm.live().dashboard, layout.saved)
-        assertEquals(listOf("Renamed", "A", "B"), assertNotNull(layout.saved).sections.map { it.title })
+        assertEquals(vm.live().dashboard, layout.savedDashboard())
+        assertEquals(listOf("Renamed", "A", "B"), assertNotNull(layout.savedDashboard()).sections.map { it.title })
     }
 
     @Test fun anEditThatChangesNothingIsNotSaved() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         vm.deleteTile(TileId("nobody"))
         vm.moveTile(TileId("t0"), SectionId("s0"), 0)
@@ -404,7 +411,7 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun newTilesAndSectionsGetIdsNothingHasAndANewTileIsWhatItsDomainSays() = runTest {
-        val vm = model(MemoryHaLayout(SAVED_LAYOUT))
+        val vm = model(MemoryHaLayout(SAVED_TABS))
         vm.addSection("Hall")
         vm.addTile(SectionId("s1"), HaEntityId("script.cool"))
         runCurrent()
@@ -416,7 +423,7 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun aDragOfTheEditListMovesATileAcrossSections() = runTest {
-        val vm = model(MemoryHaLayout(SAVED_LAYOUT))
+        val vm = model(MemoryHaLayout(SAVED_TABS))
         vm.addSection("Hall")
         runCurrent()
         // rows: s0, t0, t1, s1. Drop t0 below the second header.
@@ -427,7 +434,7 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun aTapDoesNotCallAnythingWhileEditing() = runTest {
-        val vm = model(MemoryHaLayout(SAVED_LAYOUT))
+        val vm = model(MemoryHaLayout(SAVED_TABS))
         vm.toggleEditing()
         runCurrent()
         assertTrue(vm.live().editing)
@@ -443,7 +450,7 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun theEditButtonFollowsWhetherThereIsALayoutAndWhetherItIsOpen() = runTest {
-        val vm = model(MemoryHaLayout(SAVED_LAYOUT))
+        val vm = model(MemoryHaLayout(SAVED_TABS))
         assertEquals(HaEditButton.Edit, vm.editButton.value)
         vm.toggleEditing()
         runCurrent()
@@ -454,18 +461,18 @@ class HaLayoutReconcileTest {
     }
 
     @Test fun aResyncReplacesTheSavedLayoutWithHomeAssistants() = runTest {
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         assertEquals(listOf("Mine"), assertNotNull(vm.live().dashboard).sections.map { it.title })
         vm.resyncFromHa()
         runCurrent()
         assertEquals(HaResync.Done, vm.resync.value)
         assertEquals(listOf("Kitchen"), assertNotNull(vm.live().dashboard).sections.map { it.title })
-        assertEquals(vm.live().dashboard, layout.saved)
+        assertEquals(vm.live().dashboard, layout.savedDashboard())
     }
 
     @Test fun aResyncLeavesEditMode() = runTest {
-        val vm = model(MemoryHaLayout(SAVED_LAYOUT))
+        val vm = model(MemoryHaLayout(SAVED_TABS))
         vm.toggleEditing()
         runCurrent()
         assertTrue(vm.live().editing)
@@ -476,7 +483,7 @@ class HaLayoutReconcileTest {
 
     @Test fun aResyncThatCannotReadFailsAndKeepsTheLayout() = runTest {
         ha.config = "not json"
-        val layout = MemoryHaLayout(SAVED_LAYOUT)
+        val layout = MemoryHaLayout(SAVED_TABS)
         val vm = model(layout)
         vm.resyncFromHa()
         runCurrent()

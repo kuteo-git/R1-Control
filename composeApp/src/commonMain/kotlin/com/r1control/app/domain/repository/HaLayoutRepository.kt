@@ -1,11 +1,11 @@
 package com.r1control.app.domain.repository
 
-import com.r1control.app.domain.model.ha.HaDashboard
+import com.r1control.app.domain.model.ha.HaTabs
 
-/** The dashboard layout this phone keeps: the app's own, edited by the person, never rebuilt from Home Assistant. */
+/** The tabs layout this phone keeps: the app's own, edited by the person, never rebuilt from Home Assistant. */
 interface HaLayoutRepository {
-    /** The saved layout, or null when none has ever been saved (or what was saved cannot be read). */
-    suspend fun load(): HaDashboard?
+    /** The saved tabs, or null when none has ever been saved (or what was saved cannot be read). */
+    suspend fun load(): HaTabs?
 
-    suspend fun save(dashboard: HaDashboard)
+    suspend fun save(tabs: HaTabs)
 }

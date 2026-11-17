@@ -3,16 +3,20 @@ package com.r1control.app.data
 import com.r1control.app.data.local.SettingsDataSource
 import com.r1control.app.data.local.SettingsKeys
 import com.r1control.app.data.repository.SettingsHaLayoutRepository
-import com.r1control.app.data.repository.decodeLayout
-import com.r1control.app.data.repository.encodeLayout
+import com.r1control.app.data.repository.decodeTabs
+import com.r1control.app.data.repository.encodeTabs
 import com.r1control.app.domain.model.ha.HaAttribute
 import com.r1control.app.domain.model.ha.HaCondition
 import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.HaServiceCall
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaTile
+import com.r1control.app.domain.model.ha.addTab
+import com.r1control.app.domain.model.ha.selectTab
 import com.r1control.app.domain.model.ha.SectionId
+import com.r1control.app.domain.model.ha.TabId
 import com.r1control.app.domain.model.ha.TileId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -71,56 +75,74 @@ private val EVERY_KIND = HaDashboard(
     ),
 )
 
+/** A dashboard through the store and back, as the one tab it is wrapped in: null when it did not survive. */
+private fun roundTrip(dashboard: HaDashboard): HaDashboard? = decodeTabs(encodeTabs(HaTabs.of(dashboard)))?.current?.dashboard
+
 class HaLayoutStoreTest {
     @Test fun everyKindOfTileAndAttributeSurvivesTheRoundTrip() {
-        assertEquals(EVERY_KIND, decodeLayout(encodeLayout(EVERY_KIND)))
+        assertEquals(EVERY_KIND, roundTrip(EVERY_KIND))
     }
 
     @Test fun anEmptyLayoutSurvivesToo() {
-        assertEquals(HaDashboard.Empty, decodeLayout(encodeLayout(HaDashboard.Empty)))
+        assertEquals(HaDashboard.Empty, roundTrip(HaDashboard.Empty))
+    }
+
+    @Test fun manyTabsEachWithItsNameAndIconSurvive() {
+        val tabs = HaTabs.of(EVERY_KIND, TabId("tab0"), "Home", "mdi:home")
+            .addTab(TabId("tab1"), "Lights", "mdi:lightbulb")
+            .selectTab(TabId("tab1"))
+        assertEquals(tabs, decodeTabs(encodeTabs(tabs)))
+    }
+
+    @Test fun aVersionOneLayoutMigratesToOneTab() {
+        val v1 = """{"version":1,"sections":[{"id":"s0","title":"Den","tiles":[{"kind":"toggle","id":"t0","name":"","icon":"","entity":"light.a"}]}]}"""
+        val tabs = decodeTabs(v1)!!
+        assertEquals(1, tabs.tabs.size)
+        assertEquals("Den", tabs.current!!.dashboard.sections.single().title)
     }
 
     @Test fun whatIsNotALayoutIsUnreadable() {
-        listOf("", "not json", "[]", "{}", """{"version":1}""", """{"version":99,"sections":[]}""").forEach {
-            assertNull(decodeLayout(it), it)
+        listOf("", "not json", "[]", """{"version":99,"tabs":[]}""").forEach {
+            assertNull(decodeTabs(it), it)
         }
     }
 
     @Test fun aTileOfAKindThisAppDoesNotKnowMakesTheWholeLayoutUnreadable() {
-        val text = encodeLayout(EVERY_KIND).replace("\"cover\"", "\"thermostat\"")
-        assertNull(decodeLayout(text))
+        val text = encodeTabs(HaTabs.of(EVERY_KIND)).replace("\"cover\"", "\"thermostat\"")
+        assertNull(decodeTabs(text))
     }
 
     @Test fun aLayoutWrittenBeforeConditionsReadsAsAlwaysDrawn() {
         val text = """{"version":1,"sections":[{"id":"s0","title":"","tiles":[{"kind":"toggle","id":"t0","name":"","icon":"","entity":"light.a"}]}]}"""
-        assertEquals(HaCondition.Always, decodeLayout(text)!!.sections.single().tiles.single().condition)
+        assertEquals(HaCondition.Always, decodeTabs(text)!!.current!!.dashboard.sections.single().tiles.single().condition)
     }
 
     @Test fun aConditionOfATypeThisAppDoesNotKnowMakesTheWholeLayoutUnreadable() {
-        val text = encodeLayout(EVERY_KIND).replace("\"state_not\"", "\"or\"")
-        assertNull(decodeLayout(text))
+        val text = encodeTabs(HaTabs.of(EVERY_KIND)).replace("\"state_not\"", "\"or\"")
+        assertNull(decodeTabs(text))
     }
 
     @Test fun aTemplateWithoutItsTextIsUnreadable() {
         val text = """{"version":1,"sections":[{"id":"s0","title":"","tiles":[{"kind":"template","id":"t0","name":"","icon":"","entity":""}]}]}"""
-        assertNull(decodeLayout(text))
+        assertNull(decodeTabs(text))
     }
 
     @Test fun aTemplateWithNoTapComesBackWithNoTap() {
-        val tile = decodeLayout(encodeLayout(EVERY_KIND))!!.sections.first().tiles.filterIsInstance<HaTile.Template>().first { it.id.value == "t10" }
+        val tile = roundTrip(EVERY_KIND)!!.sections.first().tiles.filterIsInstance<HaTile.Template>().first { it.id.value == "t10" }
         assertEquals(HaServiceCall.None, tile.call)
     }
 
     @Test fun anActionWithoutItsCallIsUnreadable() {
         val text = """{"version":1,"sections":[{"id":"s0","title":"","tiles":[{"kind":"action","id":"t0","name":"","icon":"","entity":"script.a"}]}]}"""
-        assertNull(decodeLayout(text))
+        assertNull(decodeTabs(text))
     }
 
     @Test fun aSavedLayoutIsLoadedBackAndNothingSavedIsNull() = runTest {
         val repo = SettingsHaLayoutRepository(MemorySettings())
         assertNull(repo.load())
-        repo.save(EVERY_KIND)
-        assertEquals(EVERY_KIND, repo.load())
+        val tabs = HaTabs.of(EVERY_KIND)
+        repo.save(tabs)
+        assertEquals(tabs, repo.load())
     }
 
     @Test fun anUnreadableValueLoadsAsNoneAndIsKeptAsideOnceNeverOverwritten() = runTest {

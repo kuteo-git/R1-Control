@@ -32,6 +32,7 @@ import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.HaServiceCall
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.TileId
@@ -268,7 +269,7 @@ private fun live(
     failed: Boolean = false,
     entities: List<HaEntity> = sampleEntities,
     editing: Boolean = false,
-) = HaState.Live(connection, entities, dashboard, failed, editing)
+) = HaState.Live(connection, entities, dashboard?.let { HaTabs.of(it) }, failed, editing)
 
 @Composable
 private fun Content(state: HaState) = HaContent(state, "", "", HaFormStatus.Idle, {}, {}, {}, HaTileActions.None, HaEditActions.None)

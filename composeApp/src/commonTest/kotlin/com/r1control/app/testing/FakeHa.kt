@@ -3,7 +3,7 @@ package com.r1control.app.testing
 import com.r1control.app.domain.model.ha.HaAddress
 import com.r1control.app.domain.model.ha.HaAttribute
 import com.r1control.app.domain.model.ha.HaConnectionState
-import com.r1control.app.domain.model.ha.HaDashboard
+import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaEntity
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.SavedHaAddress
@@ -74,11 +74,11 @@ class MemoryHaSettings(var saved: SavedHaAddress = SavedHaAddress.Unset) : HaSet
 }
 
 /** The layout kept in memory. [saves] counts every write, so a test can tell a layout that was kept from one that was rewritten. */
-class MemoryHaLayout(var saved: HaDashboard? = null) : HaLayoutRepository {
+class MemoryHaLayout(var saved: HaTabs? = null) : HaLayoutRepository {
     var saves = 0
-    override suspend fun load(): HaDashboard? = saved
-    override suspend fun save(dashboard: HaDashboard) {
+    override suspend fun load(): HaTabs? = saved
+    override suspend fun save(tabs: HaTabs) {
         saves++
-        saved = dashboard
+        saved = tabs
     }
 }
