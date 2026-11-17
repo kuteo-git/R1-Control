@@ -67,9 +67,14 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<!-- The outer bound of what the app may ever be. The Swift delegate narrows
+	     it to portrait until a camera fills the screen, when it allows landscape.
+	     Listing only portrait here would leave that flag unable to do anything. -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

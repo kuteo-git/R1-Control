@@ -76,6 +76,7 @@ private fun CameraCard(camera: HaCamera, url: String, onOpen: () -> Unit) {
 @Composable
 fun CameraFullscreen(camera: HaCamera, baseUrl: String, pathOf: suspend (HaEntityId) -> String, onClose: () -> Unit) {
     BackHandler(true) { onClose() }
+    ApplyCameraFullscreen()
     val url = streamUrl(camera.entity, baseUrl, pathOf)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         if (url.isNotEmpty()) CameraStream(url, Modifier.fillMaxSize())
