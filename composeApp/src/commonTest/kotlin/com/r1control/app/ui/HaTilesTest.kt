@@ -7,7 +7,7 @@ import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaServiceCall
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.TileId
-import com.r1control.app.ui.ha.glyphFor
+import com.r1control.app.ui.ha.iconNameFor
 import com.r1control.app.ui.ha.secondLine
 import com.r1control.app.ui.ha.tileSubtitle
 import com.r1control.app.ui.i18n.EnglishStrings
@@ -40,12 +40,15 @@ class HaTilesTest {
     }
 
     @Test fun theGlyphFollowsTheSeededIconThenWhatTheTileDoes() {
-        assertEquals(R1Icons.Lightbulb, glyphFor(toggle(0, icon = "mdi:lightbulb"), lit = true))
-        assertEquals(R1Icons.LightbulbOutline, glyphFor(toggle(0, icon = "mdi:lightbulb"), lit = false))
-        assertEquals(R1Icons.Thermostat, glyphFor(HaTile.Readout(TileId("t"), "", "mdi:coolant-temperature", HaEntityId("sensor.t")), lit = false))
-        assertEquals(R1Icons.Power, glyphFor(toggle(0, "switch.fan", "mdi:fan"), lit = true))
-        assertEquals(R1Icons.Lightbulb, glyphFor(toggle(0, "light.hall"), lit = true))
-        assertEquals(R1Icons.Play, glyphFor(HaTile.Action(TileId("t"), "", "", HaEntityId("script.x"), HaServiceCall("script", "x", emptyMap())), lit = false))
+        // Its own seeded mdi icon wins, drawn exactly, on or off.
+        assertEquals("lightbulb", iconNameFor(toggle(0, icon = "mdi:lightbulb"), lit = true))
+        assertEquals("lightbulb", iconNameFor(toggle(0, icon = "mdi:lightbulb"), lit = false))
+        assertEquals("coolant-temperature", iconNameFor(HaTile.Readout(TileId("t"), "", "mdi:coolant-temperature", HaEntityId("sensor.t")), lit = false))
+        assertEquals("fan", iconNameFor(toggle(0, "switch.fan", "mdi:fan"), lit = true))
+        // No icon of its own: a light falls to the bulb, outline when off.
+        assertEquals("lightbulb", iconNameFor(toggle(0, "light.hall"), lit = true))
+        assertEquals("lightbulb-outline", iconNameFor(toggle(0, "light.hall"), lit = false))
+        assertEquals("play", iconNameFor(HaTile.Action(TileId("t"), "", "", HaEntityId("script.x"), HaServiceCall("script", "x", emptyMap())), lit = false))
     }
 
     @Test fun theSecondLineIsTheStateTheSongOrNothing() {

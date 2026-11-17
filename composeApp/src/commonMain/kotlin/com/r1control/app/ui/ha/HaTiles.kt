@@ -45,6 +45,7 @@ import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.SectionLabel
 import com.r1control.app.ui.components.tappable
 import com.r1control.app.ui.i18n.LocalStrings
+import com.r1control.app.ui.icons.MdiIcons
 import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.theme.Radius
 import com.r1control.app.ui.theme.Space
@@ -97,26 +98,34 @@ fun tileRowsOf(tiles: List<HaTile>): List<List<HaTile>> {
 }
 
 /**
- * The glyph for a tile: the mdi name Home Assistant seeded when it is one this app draws, else one
- * by what the tile does. [lit] picks an outline for a bulb that is off.
+ * The glyph for a tile: the exact Material Design Icon Home Assistant named for the entity, drawn from the
+ * app's generated [MdiIcons] set. A name not in the set, or an entity that named none, falls back to one by
+ * what the tile does. [lit] picks an outline bulb for a light that is off and has no icon of its own.
  */
-fun glyphFor(tile: HaTile, lit: Boolean): ImageVector {
-    val mdi = tile.icon.removePrefix("mdi:")
-    return when {
-        "lightbulb" in mdi || "lamp" in mdi || "ceiling-light" in mdi -> if (lit) R1Icons.Lightbulb else R1Icons.LightbulbOutline
-        "temperature" in mdi || "thermo" in mdi || "air-conditioner" in mdi -> R1Icons.Thermostat
-        "music" in mdi || "play" in mdi -> R1Icons.MusicNote
-        "speaker" in mdi -> R1Icons.Speaker
-        "power" in mdi -> R1Icons.Power
-        else -> when (tile) {
-            is HaTile.Toggle -> if (tile.entity.domainName == "light") (if (lit) R1Icons.Lightbulb else R1Icons.LightbulbOutline) else R1Icons.Power
-            is HaTile.Action -> R1Icons.Play
-            is HaTile.Readout -> R1Icons.Tune
-            is HaTile.Cover -> R1Icons.ExpandMore
-            is HaTile.Media -> R1Icons.Speaker
-            is HaTile.Template -> R1Icons.Tune
-        }
+fun glyphFor(tile: HaTile, lit: Boolean): ImageVector = MdiIcons.byName(iconNameFor(tile, lit)) ?: R1Icons.Power
+
+/** The mdi name a tile draws: its own seeded icon when the set has it, else one by what the tile does. */
+fun iconNameFor(tile: HaTile, lit: Boolean): String {
+    val own = tile.icon.removePrefix("mdi:")
+    if (own.isNotEmpty() && MdiIcons.has(own)) return own
+    return defaultMdiFor(tile, lit)
+}
+
+/** The mdi name for a tile that carries none, by its domain and what it does. */
+private fun defaultMdiFor(tile: HaTile, lit: Boolean): String = when (tile) {
+    is HaTile.Toggle -> when (tile.entity.domainName) {
+        "light" -> if (lit) "lightbulb" else "lightbulb-outline"
+        "fan" -> "fan"
+        "climate" -> "thermostat"
+        "camera" -> "cctv"
+        "switch" -> "toggle-switch"
+        else -> "power"
     }
+    is HaTile.Action -> "play"
+    is HaTile.Readout -> "gauge"
+    is HaTile.Cover -> "window-shutter"
+    is HaTile.Media -> "speaker"
+    is HaTile.Template -> "tune"
 }
 
 /** The dashboard as lazy items: a title, then rows of tiles, per section. A tile whose condition does not hold is left out, and a section left with nothing is too. */
