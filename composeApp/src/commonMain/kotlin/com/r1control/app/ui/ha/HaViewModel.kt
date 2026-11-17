@@ -7,8 +7,10 @@ import com.r1control.app.domain.model.ha.HaEntity
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaServiceCall
 import com.r1control.app.domain.model.ha.HaTile
+import com.r1control.app.domain.model.ha.HaCamera
 import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaTabs
+import com.r1control.app.domain.model.ha.camerasFrom
 import com.r1control.app.domain.model.ha.SavedHaAddress
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.TabId
@@ -197,6 +199,19 @@ class HaViewModel(
 
     /** Where a manual re-import from Home Assistant stands, for Home Assistant's settings to show. */
     val resync: StateFlow<HaResync> = resyncState.asStateFlow()
+
+    /** The household's cameras that can stream, kept up to date with the entities. */
+    val cameras: StateFlow<List<HaCamera>> =
+        ha.entities.map { camerasFrom(it) }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    /** The server path of a live HLS stream of [entity], or empty when the link is down or it cannot stream. */
+    suspend fun cameraStreamPath(entity: HaEntityId): String = try {
+        ha.cameraStreamPath(entity)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        ""
+    }
 
     val state: StateFlow<HaState> =
         combine(stored, ha.connectionState, ha.entities, dashboard, editing, ::haStateOf)

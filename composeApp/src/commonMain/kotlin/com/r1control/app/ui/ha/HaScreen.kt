@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +31,7 @@ import com.r1control.app.domain.model.ha.HaConnectionState
 import com.r1control.app.domain.model.ha.haBaseUrl
 import com.r1control.app.domain.model.ha.HaEntity
 import com.r1control.app.domain.model.ha.HaDashboard
+import com.r1control.app.domain.model.ha.HaCamera
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.HaServiceCall
@@ -36,6 +39,8 @@ import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.TileId
+import com.r1control.app.ui.camera.CameraFullscreen
+import com.r1control.app.ui.camera.cameraItems
 import com.r1control.app.ui.components.LoadingBox
 import com.r1control.app.ui.components.TonalButton
 import com.r1control.app.ui.i18n.EnglishStrings
@@ -77,7 +82,8 @@ fun HaScreen(viewModel: HaViewModel, setup: HaSettingsViewModel) {
             viewModel::setTabIcon, viewModel::deleteTab, viewModel::moveTab,
         )
     }
-    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit, tabActions)
+    val cameras by viewModel.cameras.collectAsState()
+    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit, tabActions, cameras, viewModel::cameraStreamPath)
     val target by viewModel.controlTarget.collectAsState()
     val controls = remember(viewModel) {
         HaControlActions(
@@ -103,35 +109,51 @@ fun HaContent(
     actions: HaTileActions,
     edit: HaEditActions,
     tabs: HaTabActions = HaTabActions.None,
+    cameras: List<HaCamera> = emptyList(),
+    cameraPath: suspend (HaEntityId) -> String = { "" },
 ) {
     when (state) {
         HaState.Loading -> LoadingBox()
         HaState.NeedsSetup -> HaSetupContent(address, token, status, false, onAddress, onToken, onConnect)
         HaState.TokenRefused -> HaSetupContent(address, token, status, true, onAddress, onToken, onConnect)
-        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit, tabs)
+        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit, tabs, cameras, cameraPath)
     }
 }
 
 @Composable
-private fun HaLive(state: HaState.Live, baseUrl: String, actions: HaTileActions, edit: HaEditActions, tabActions: HaTabActions) {
+private fun HaLive(
+    state: HaState.Live,
+    baseUrl: String,
+    actions: HaTileActions,
+    edit: HaEditActions,
+    tabActions: HaTabActions,
+    cameras: List<HaCamera>,
+    cameraPath: suspend (HaEntityId) -> String,
+) {
     val strings = LocalStrings.current
     val connected = state.connection == HaConnectionState.Connected
     val dashboard = state.dashboard
-    // The connection dot and the entity count live in the tab's title now, not on a line here.
-    Column(Modifier.fillMaxSize()) {
-        // More than one tab earns a bar to switch between them; the edit mode shows it even for one, to add or edit.
-        state.tabs?.takeIf { state.editing || it.tabs.size > 1 }?.let { HaTabBar(it, state.editing, tabActions) }
-        when {
-            dashboard != null && state.editing -> HaEditList(dashboard, state.entities, edit)
-            dashboard != null && dashboard.tileCount > 0 -> {
-                val byId = remember(state.entities) { state.entities.associateBy { it.id } }
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Space.XLarge)) {
-                    dashboardItems(dashboard, byId, connected, baseUrl, actions)
+    // The cameras are not shown while editing the layout; the fullscreen one is over everything.
+    var expandedCamera by remember { mutableStateOf<HaCamera?>(null) }
+    val showCameras = cameras.takeUnless { state.editing }.orEmpty()
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            // More than one tab earns a bar to switch between them; the edit mode shows it even for one, to add or edit.
+            state.tabs?.takeIf { state.editing || it.tabs.size > 1 }?.let { HaTabBar(it, state.editing, tabActions) }
+            when {
+                dashboard != null && state.editing -> HaEditList(dashboard, state.entities, edit)
+                dashboard != null && (dashboard.tileCount > 0 || showCameras.isNotEmpty()) -> {
+                    val byId = remember(state.entities) { state.entities.associateBy { it.id } }
+                    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Space.XLarge)) {
+                        cameraItems(showCameras, baseUrl, cameraPath) { expandedCamera = it }
+                        dashboardItems(dashboard, byId, connected, baseUrl, actions)
+                    }
                 }
+                dashboard != null -> Note(strings.haDashboardEmpty)
+                else -> HaEntityList(state, if (state.dashboardFailed) strings.haDashboardFailed else if (connected) strings.haDashboardLoading else "", edit.onStartEmpty)
             }
-            dashboard != null -> Note(strings.haDashboardEmpty)
-            else -> HaEntityList(state, if (state.dashboardFailed) strings.haDashboardFailed else if (connected) strings.haDashboardLoading else "", edit.onStartEmpty)
         }
+        expandedCamera?.let { CameraFullscreen(it, baseUrl, cameraPath) { expandedCamera = null } }
     }
 }
 
