@@ -119,8 +119,8 @@ private fun HaLive(state: HaState.Live, baseUrl: String, actions: HaTileActions,
     val dashboard = state.dashboard
     // The connection dot and the entity count live in the tab's title now, not on a line here.
     Column(Modifier.fillMaxSize()) {
-        // More than one tab earns a bar to switch between them; a lone tab shows none.
-        state.tabs?.takeIf { it.tabs.size > 1 }?.let { HaTabBar(it, tabActions.onSelect) }
+        // More than one tab earns a bar to switch between them; the edit mode shows it even for one, to add or edit.
+        state.tabs?.takeIf { state.editing || it.tabs.size > 1 }?.let { HaTabBar(it, state.editing, tabActions) }
         when {
             dashboard != null && state.editing -> HaEditList(dashboard, state.entities, edit)
             dashboard != null && dashboard.tileCount > 0 -> {

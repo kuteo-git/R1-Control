@@ -31,10 +31,13 @@ cctv
 ceiling-light
 cellphone
 cellphone-wireless
+check
+chevron-down
 clipboard-text
 clock
 clock-outline
 clock-time-eleven
+close
 code-braces
 cog
 cookie
@@ -87,9 +90,11 @@ music
 music-box-multiple
 palette
 pause
+pencil
 percent
 play
 playlist-music
+plus
 power
 power-plug
 power-settings
