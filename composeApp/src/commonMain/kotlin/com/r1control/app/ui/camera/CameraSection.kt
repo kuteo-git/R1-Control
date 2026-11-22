@@ -123,7 +123,8 @@ fun CameraFullscreen(camera: HaCamera, baseUrl: String, pathOf: suspend (HaEntit
     ApplyCameraFullscreen()
     val url = streamUrl(camera.entity, baseUrl, pathOf)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        if (url.isNotEmpty()) CameraStream(url, Modifier.fillMaxSize())
+        // The whole picture in its own shape, and with sound; the cards are cropped and silent.
+        if (url.isNotEmpty()) CameraStream(url, Modifier.fillMaxSize(), fill = false, muted = false)
         // A head wash so the chrome reads over the picture.
         Box(
             Modifier.fillMaxWidth().height(140.dp).align(Alignment.TopCenter).background(

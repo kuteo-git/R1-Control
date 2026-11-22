@@ -8,6 +8,6 @@ import androidx.compose.ui.graphics.Color
 
 /** The jvm target exists only to run tests; it draws a black box where a stream would play. */
 @Composable
-actual fun CameraStream(url: String, modifier: Modifier) {
+actual fun CameraStream(url: String, modifier: Modifier, fill: Boolean, muted: Boolean) {
     Box(modifier.background(Color.Black))
 }
