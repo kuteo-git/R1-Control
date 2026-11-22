@@ -30,6 +30,10 @@ actual fun CameraStream(url: String, modifier: Modifier) {
             PlayerView(ctx).apply {
                 useController = false
                 setKeepContentOnPlayerReset(true)
+                // The picture reacts to nothing; it must not eat the touch the
+                // card below or the controls above want.
+                isClickable = false
+                isFocusable = false
                 this.player = player
             }
         },

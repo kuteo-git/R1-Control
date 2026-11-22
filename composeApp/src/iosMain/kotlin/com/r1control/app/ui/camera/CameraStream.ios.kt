@@ -44,5 +44,10 @@ actual fun CameraStream(url: String, modifier: Modifier) {
             (view.layer.sublayers?.firstOrNull() as? AVPlayerLayer)?.setFrame(rect)
             CATransaction.commit()
         },
+        // An interop view sits over its Compose siblings and would eat the touch,
+        // so the card below and the controls above would never see it. The
+        // picture reacts to nothing, so it refuses every touch and every focus.
+        interactive = false,
+        accessibilityEnabled = false,
     )
 }
