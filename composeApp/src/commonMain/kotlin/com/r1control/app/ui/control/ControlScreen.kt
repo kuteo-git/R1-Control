@@ -2,7 +2,6 @@ package com.r1control.app.ui.control
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,25 +32,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.setProgress
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import com.r1control.app.ui.components.CardFrame
 import com.r1control.app.ui.components.CardGround
 import com.r1control.app.ui.components.CardMinHeight
 import com.r1control.app.ui.components.DiscOverCover
-import com.r1control.app.ui.components.LocalHaptics
 import com.r1control.app.ui.components.PlayerCard
+import com.r1control.app.ui.components.VolumePill
 import com.r1control.app.ui.components.PlayerView
-import com.r1control.app.ui.components.fillAfterDrag
-import com.r1control.app.ui.components.notchFeel
-import com.r1control.app.ui.components.notchOf
-import com.r1control.app.ui.components.volumeNotches
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -79,7 +67,6 @@ import com.r1control.app.ui.theme.R1Theme
 import com.r1control.app.ui.theme.Radius
 import com.r1control.app.ui.theme.Space
 import com.r1control.app.ui.theme.Tokens
-import kotlin.math.roundToInt
 
 /** What the Control tab can do, so previews pass nothing and the screen passes the view model. */
 class ControlActions(
@@ -133,7 +120,7 @@ fun ControlContent(state: ControlState, actions: ControlActions, modifier: Modif
         val problem = state.problem
         if (problem is Problem.Failed) ProblemBanner(strings.describe(problem.error))
         MediaCard(state.card, state.canNext, actions)
-        VolumePill(state.volume, actions.onVolume, actions.onVolumeDone)
+        VolumePill(state.volume.pct, state.volume.scale.steps, state.volume.enabled, actions.onVolume, actions.onVolumeDone)
         // Under the card, not in it: listening beside a stopped player has a card that shows Nothing.
         VoiceSection(state.voice, actions)
     }
@@ -334,84 +321,6 @@ private fun MusicBody(now: NowPlaying.Music, canNext: Boolean, actions: ControlA
             }
         },
     )
-}
-
-/**
- * The volume bar: the fill is the level, and a horizontal drag anywhere moves
- * it by how far the finger travels (a tap writes nothing: at night an
- * accidental touch must not jump the speaker to 100%). The shown number is the
- * finger's, not the poll's. For a screen reader it is one adjustable element
- * that steps through the speaker's hardware steps.
- */
-@Composable
-fun VolumePill(volume: VolumeState, onDrag: (Int) -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
-    val strings = LocalStrings.current
-    val level by rememberUpdatedState(volume.pct)
-    val notches by rememberUpdatedState(volumeNotches(volume.scale.steps))
-    val haptics = LocalHaptics.current
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .clip(CircleShape)
-            .background(Tokens.Card)
-            .clearAndSetSemantics {
-                contentDescription = strings.volume
-                if (volume.enabled) {
-                    stateDescription = strings.volumePercent(volume.pct)
-                    progressBarRangeInfo = ProgressBarRangeInfo(
-                        current = volume.pct.toFloat(),
-                        range = 0f..100f,
-                        steps = (volume.scale.steps - 1).coerceAtLeast(0),
-                    )
-                    setProgress { target ->
-                        onDrag(target.roundToInt())
-                        onDone()
-                        true
-                    }
-                } else {
-                    disabled()
-                }
-            }
-            .pointerInput(volume.enabled) {
-                if (!volume.enabled) return@pointerInput
-                var start = 0
-                var travelled = 0f
-                var felt = 0
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        start = level
-                        travelled = 0f
-                        felt = notchOf(level.toFloat(), 0f..100f, notches)
-                    },
-                    onDragEnd = onDone,
-                    onDragCancel = onDone,
-                    onHorizontalDrag = { change, dx ->
-                        change.consume()
-                        travelled += dx
-                        val pct = fillAfterDrag(start, travelled, size.width.toFloat())
-                        val notch = notchOf(pct.toFloat(), 0f..100f, notches)
-                        notchFeel(felt, notch, notches)?.let(haptics::play)
-                        felt = notch
-                        onDrag(pct)
-                    },
-                )
-            },
-    ) {
-        if (volume.enabled) {
-            Box(Modifier.fillMaxHeight().fillMaxWidth(volume.pct / 100f).background(Tokens.VolumeFill))
-        }
-        Row(
-            Modifier.fillMaxSize().padding(horizontal = Space.XLarge),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            R1Icon(if (volume.enabled && volume.pct == 0) R1Icons.VolumeOff else R1Icons.Volume, null, tint = Tokens.Accent, size = 26.dp)
-            if (volume.enabled) {
-                Spacer(Modifier.width(Space.Large))
-                Text(strings.volumePercent(volume.pct), style = MaterialTheme.typography.bodyLarge, color = Tokens.Accent)
-            }
-        }
-    }
 }
 
 // ---- previews ----

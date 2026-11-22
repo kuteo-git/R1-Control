@@ -21,9 +21,6 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.r1control.app.domain.model.VolumeScale
-import com.r1control.app.ui.control.VolumePill
-import com.r1control.app.ui.control.VolumeState
 import com.r1control.app.ui.i18n.EnglishStrings
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.icons.R1Icons
@@ -113,7 +110,7 @@ class HapticsGestureTest {
     fun theVolumeTicksPerSpeakerStepAndKnocksOnceAtTheTop() {
         var pct by mutableStateOf(40)
         Rig {
-            VolumePill(VolumeState(pct, VolumeScale(15), enabled = true), onDrag = { pct = it }, onDone = {})
+            VolumePill(pct, steps = 15, enabled = true, onDrag = { pct = it }, onDone = {})
         }.use {
             val y = 36 * density
             // Well past the right end: the level stops at 100 and the knock is not repeated while the finger goes on.
@@ -126,7 +123,7 @@ class HapticsGestureTest {
     @Test
     fun aTapOnTheVolumeWritesNothingAndFeelsNothing() {
         var pct by mutableStateOf(40)
-        Rig { VolumePill(VolumeState(pct, VolumeScale(15), enabled = true), onDrag = { pct = it }, onDone = {}) }.use {
+        Rig { VolumePill(pct, steps = 15, enabled = true, onDrag = { pct = it }, onDone = {}) }.use {
             tap(widthPx * 0.9f, 36 * density)
             assertEquals(40, pct)
             assertEquals(emptyList(), felt)
@@ -136,7 +133,7 @@ class HapticsGestureTest {
     @Test
     fun theVolumeDraggedDownKnocksAtSilence() {
         var pct by mutableStateOf(20)
-        Rig { VolumePill(VolumeState(pct, VolumeScale(15), enabled = true), onDrag = { pct = it }, onDone = {}) }.use {
+        Rig { VolumePill(pct, steps = 15, enabled = true, onDrag = { pct = it }, onDone = {}) }.use {
             drag(widthPx * 0.9f, widthPx * 0.9f - widthPx * 0.5f, 36 * density)
             assertEquals(0, pct)
             assertEquals(listOf(Haptic.Tick, Haptic.Tick, Haptic.Knock), felt, "20% is step 3: 2 and 1 tick, 0 knocks")

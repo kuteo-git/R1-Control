@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -716,6 +717,80 @@ fun VerticalLevelSlider(
         ) {
             Text(if (enabled) valueText(shown.intValue) else "", style = MaterialTheme.typography.titleMedium, color = Tokens.Accent)
             R1Icon(icon, null, tint = Tokens.Accent, size = 28.dp)
+        }
+    }
+}
+
+/**
+ * The volume bar, the R1 speaker's and a media_player's alike: a full-width pill whose fill is the level,
+ * dragged horizontally. Where the finger lands sets nothing, the travel does, so an accidental touch never
+ * jumps the volume to 100%. [onDrag] reports the level as the finger moves, [onDone] fires once on release,
+ * and the shown number is the finger's, not a poll's. [steps] is the device's hardware steps, 0 for a
+ * continuous level (20 haptic notches, and a continuous element to a screen reader).
+ */
+@Composable
+fun VolumePill(pct: Int, steps: Int, enabled: Boolean, onDrag: (Int) -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+    val strings = com.r1control.app.ui.i18n.LocalStrings.current
+    val level by rememberUpdatedState(pct)
+    val notches by rememberUpdatedState(volumeNotches(steps))
+    val haptics = LocalHaptics.current
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .clip(CircleShape)
+            .background(Tokens.Card)
+            .clearAndSetSemantics {
+                contentDescription = strings.volume
+                if (enabled) {
+                    stateDescription = strings.volumePercent(pct)
+                    progressBarRangeInfo = ProgressBarRangeInfo(pct.toFloat(), 0f..100f, (steps - 1).coerceAtLeast(0))
+                    setProgress { target ->
+                        onDrag(target.roundToInt())
+                        onDone()
+                        true
+                    }
+                } else {
+                    disabled()
+                }
+            }
+            .pointerInput(enabled) {
+                if (!enabled) return@pointerInput
+                var start = 0
+                var travelled = 0f
+                var felt = 0
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        start = level
+                        travelled = 0f
+                        felt = notchOf(level.toFloat(), 0f..100f, notches)
+                    },
+                    onDragEnd = onDone,
+                    onDragCancel = onDone,
+                    onHorizontalDrag = { change, dx ->
+                        change.consume()
+                        travelled += dx
+                        val p = fillAfterDrag(start, travelled, size.width.toFloat())
+                        val notch = notchOf(p.toFloat(), 0f..100f, notches)
+                        notchFeel(felt, notch, notches)?.let(haptics::play)
+                        felt = notch
+                        onDrag(p)
+                    },
+                )
+            },
+    ) {
+        if (enabled) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(pct / 100f).background(Tokens.VolumeFill))
+        }
+        Row(
+            Modifier.fillMaxSize().padding(horizontal = Space.XLarge),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            R1Icon(if (enabled && pct == 0) R1Icons.VolumeOff else R1Icons.Volume, null, tint = Tokens.Accent, size = 26.dp)
+            if (enabled) {
+                Spacer(Modifier.width(Space.Large))
+                Text(strings.volumePercent(pct), style = MaterialTheme.typography.bodyLarge, color = Tokens.Accent)
+            }
         }
     }
 }

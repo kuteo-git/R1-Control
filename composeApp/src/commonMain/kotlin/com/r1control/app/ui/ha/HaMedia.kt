@@ -2,7 +2,9 @@ package com.r1control.app.ui.ha
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +46,7 @@ import com.r1control.app.ui.components.PlayerCard
 import com.r1control.app.ui.components.PlayerCardShell
 import com.r1control.app.ui.components.PlayerView
 import com.r1control.app.ui.components.R1Icon
+import com.r1control.app.ui.components.VolumePill
 import com.r1control.app.ui.i18n.EnglishStrings
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.VietnameseStrings
@@ -51,6 +54,7 @@ import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.theme.R1Theme
 import com.r1control.app.ui.theme.Space
 import com.r1control.app.ui.theme.Tokens
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -94,24 +98,33 @@ fun HaMediaCard(tile: HaTile.Media, entity: HaEntity?, actions: HaTileActions, b
         preparingPercent = -1,
     )
     val strings = LocalStrings.current
-    PlayerCardShell(view.coverUrl, modifier) {
-        PlayerCard(
-            view = view,
-            onPlayPause = { actions.onMedia(tile) },
-            onSeek = { dragging = true; shown = it.coerceIn(0, duration) },
-            onSeekDone = { actions.onMediaSeek(tile, shown); dragging = false },
-            onNext = { actions.onMediaNext(tile) },
-            volume = if (entity.supportsMediaVolume) shownVolume else -1f,
-            onVolume = { shownVolume = it },
-            onVolumeDone = { actions.onMediaVolume(tile, shownVolume) },
-            topEnd = {
-                if (entity.supportsMediaStop) {
-                    Box(Modifier.clip(CircleShape).background(DiscOverCover)) {
-                        IconTap(R1Icons.Stop, strings.stop, { actions.onMediaStop(tile) }, tint = Color.White, iconSize = 20.dp)
+    // The card, then the R1's volume bar under it, the same pill the speaker wears, when the player can be set.
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.Medium)) {
+        PlayerCardShell(view.coverUrl) {
+            PlayerCard(
+                view = view,
+                onPlayPause = { actions.onMedia(tile) },
+                onSeek = { dragging = true; shown = it.coerceIn(0, duration) },
+                onSeekDone = { actions.onMediaSeek(tile, shown); dragging = false },
+                onNext = { actions.onMediaNext(tile) },
+                topEnd = {
+                    if (entity.supportsMediaStop) {
+                        Box(Modifier.clip(CircleShape).background(DiscOverCover)) {
+                            IconTap(R1Icons.Stop, strings.stop, { actions.onMediaStop(tile) }, tint = Color.White, iconSize = 20.dp)
+                        }
                     }
-                }
-            },
-        )
+                },
+            )
+        }
+        if (entity.supportsMediaVolume) {
+            VolumePill(
+                pct = (shownVolume * 100).roundToInt(),
+                steps = 0,
+                enabled = true,
+                onDrag = { shownVolume = it / 100f },
+                onDone = { actions.onMediaVolume(tile, shownVolume) },
+            )
+        }
     }
 }
 
