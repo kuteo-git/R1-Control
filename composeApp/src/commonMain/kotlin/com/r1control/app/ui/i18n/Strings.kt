@@ -274,6 +274,9 @@ interface Strings {
     val haTabChooseIcon: String
     val haTabDeleteTitle: String
     val haTabDeleteBody: String
+    val haTabMove: String
+    val haTabMoveLeft: String
+    val haTabMoveRight: String
     val haAddSection: String
     val haNewSection: String
     val haSectionName: String
@@ -588,6 +591,9 @@ object EnglishStrings : Strings {
     override val haTabChooseIcon = "Choose an icon"
     override val haTabDeleteTitle = "Delete this tab?"
     override val haTabDeleteBody = "The tab and everything in it is removed from this phone. Home Assistant is not changed."
+    override val haTabMove = "Move"
+    override val haTabMoveLeft = "Move left"
+    override val haTabMoveRight = "Move right"
     override val haAddSection = "Add section"
     override val haNewSection = "New section"
     override val haSectionName = "Section name"
@@ -892,6 +898,9 @@ object VietnameseStrings : Strings {
     override val haTabChooseIcon = "Chọn biểu tượng"
     override val haTabDeleteTitle = "Xoá thẻ này?"
     override val haTabDeleteBody = "Thẻ và mọi thứ trong nó sẽ bị gỡ khỏi điện thoại này. Home Assistant không thay đổi."
+    override val haTabMove = "Di chuyển"
+    override val haTabMoveLeft = "Chuyển sang trái"
+    override val haTabMoveRight = "Chuyển sang phải"
     override val haAddSection = "Thêm nhóm"
     override val haNewSection = "Nhóm mới"
     override val haSectionName = "Tên nhóm"

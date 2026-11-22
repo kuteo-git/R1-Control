@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.r1control.app.ui.components.ConfirmDialog
+import com.r1control.app.ui.components.IconTap
 import com.r1control.app.ui.components.R1TextField
 import com.r1control.app.ui.components.TonalButton
 import com.r1control.app.ui.components.tappable
@@ -51,6 +53,7 @@ import com.r1control.app.domain.model.ha.TabId
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.ui.i18n.VietnameseStrings
 import com.r1control.app.ui.icons.MdiIcons
+import com.r1control.app.ui.icons.R1Icons
 import com.r1control.app.ui.theme.R1Theme
 import com.r1control.app.ui.theme.Space
 import com.r1control.app.ui.theme.Tokens
@@ -129,12 +132,19 @@ fun HaTabBar(tabs: HaTabs, editing: Boolean, actions: HaTabActions, modifier: Mo
     }
     when (val a = ask) {
         TabAsk.None -> Unit
-        is TabAsk.Edit -> TabEditorDialog(
-            initialName = a.name,
-            initialIcon = a.icon,
-            onDone = { name, icon -> actions.onRename(a.id, name); actions.onSetIcon(a.id, icon); ask = TabAsk.None },
-            onCancel = { ask = TabAsk.None },
-        )
+        is TabAsk.Edit -> {
+            val index = tabs.tabs.indexOfFirst { it.id == a.id }
+            TabEditorDialog(
+                initialName = a.name,
+                initialIcon = a.icon,
+                canMoveLeft = index > 0,
+                canMoveRight = index in 0 until tabs.tabs.size - 1,
+                onMoveLeft = { actions.onMove(index, index - 1); ask = TabAsk.None },
+                onMoveRight = { actions.onMove(index, index + 1); ask = TabAsk.None },
+                onDone = { name, icon -> actions.onRename(a.id, name); actions.onSetIcon(a.id, icon); ask = TabAsk.None },
+                onCancel = { ask = TabAsk.None },
+            )
+        }
         is TabAsk.Delete -> ConfirmDialog(
             strings.haTabDeleteBody, strings.delete, strings.cancel,
             onConfirm = { actions.onDelete(a.id); ask = TabAsk.None }, onCancel = { ask = TabAsk.None },
@@ -203,9 +213,21 @@ private fun AddTabChip(onClick: () -> Unit) {
     }
 }
 
-/** A tab's name and icon, chosen together: a field, then a grid of the icon set, done writes both. */
+/**
+ * A tab's name and icon, chosen together: a field, then a grid of the icon set, done writes both. The move
+ * row reorders this tab among its siblings, each arrow disabled at the end it cannot go past.
+ */
 @Composable
-private fun TabEditorDialog(initialName: String, initialIcon: String, onDone: (String, String) -> Unit, onCancel: () -> Unit) {
+private fun TabEditorDialog(
+    initialName: String,
+    initialIcon: String,
+    canMoveLeft: Boolean,
+    canMoveRight: Boolean,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDone: (String, String) -> Unit,
+    onCancel: () -> Unit,
+) {
     val strings = LocalStrings.current
     var name by remember { mutableStateOf(initialName) }
     var icon by remember { mutableStateOf(initialIcon.removePrefix("mdi:")) }
@@ -216,6 +238,12 @@ private fun TabEditorDialog(initialName: String, initialIcon: String, onDone: (S
         ) {
             Text(strings.haTabRename, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
             R1TextField(name, { name = it }, strings.haTabUntitled)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(strings.haTabMove, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
+                IconTap(R1Icons.Back, strings.haTabMoveLeft, onMoveLeft, enabled = canMoveLeft, tint = Tokens.OnGround)
+                IconTap(R1Icons.ChevronRight, strings.haTabMoveRight, onMoveRight, enabled = canMoveRight, tint = Tokens.OnGround)
+            }
             Text(strings.haTabChooseIcon, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             LazyVerticalGrid(columns = GridCells.Adaptive(48.dp), modifier = Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(Space.Small), horizontalArrangement = Arrangement.spacedBy(Space.Small)) {
                 items(MdiIcons.names, key = { it }) { name ->
