@@ -61,13 +61,14 @@ class HaTileActions(
     val onMediaNext: (HaTile.Media) -> Unit,
     val onMediaStop: (HaTile.Media) -> Unit,
     val onMediaSeek: (HaTile.Media, Int) -> Unit,
+    val onMediaVolume: (HaTile.Media, Float) -> Unit,
     /** A tile whose entity has controls of its own (a dimmable light, a fan) shows them instead of toggling. */
     val openControls: (HaEntityId) -> Unit,
     /** Home Assistant's live rendering of a template; collected only while the tile is on screen. */
     val rendered: (template: String) -> Flow<String>,
 ) {
     companion object {
-        val None = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, {}, { emptyFlow() })
+        val None = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { emptyFlow() })
     }
 }
 

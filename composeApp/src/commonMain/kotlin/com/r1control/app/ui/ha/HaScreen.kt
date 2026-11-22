@@ -64,7 +64,7 @@ fun HaScreen(viewModel: HaViewModel, setup: HaSettingsViewModel) {
     val actions = remember(viewModel) {
         HaTileActions(
             viewModel::onTile, viewModel::onCover, viewModel::onMedia, viewModel::onMediaNext, viewModel::onMediaStop,
-            viewModel::onMediaSeek, viewModel::openControls, viewModel::renderedTemplate,
+            viewModel::onMediaSeek, viewModel::onMediaVolume, viewModel::openControls, viewModel::renderedTemplate,
         )
     }
     val edit = remember(viewModel) {
@@ -287,7 +287,7 @@ private val renderedSamples = mapOf(
     "{{ now().day }} / {{ now().month }}" to "16 / 11",
 )
 
-private val previewActions = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, {}, { template -> flowOf(renderedSamples[template].orEmpty()) })
+private val previewActions = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { template -> flowOf(renderedSamples[template].orEmpty()) })
 
 private fun live(
     connection: HaConnectionState,

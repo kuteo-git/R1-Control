@@ -32,9 +32,11 @@ import com.r1control.app.domain.model.ha.mediaDurationS
 import com.r1control.app.domain.model.ha.mediaPicture
 import com.r1control.app.domain.model.ha.mediaPositionS
 import com.r1control.app.domain.model.ha.mediaTitle
+import com.r1control.app.domain.model.ha.mediaVolume
 import com.r1control.app.domain.model.ha.supportsMediaNext
 import com.r1control.app.domain.model.ha.supportsMediaSeek
 import com.r1control.app.domain.model.ha.supportsMediaStop
+import com.r1control.app.domain.model.ha.supportsMediaVolume
 import com.r1control.app.ui.components.CardFrame
 import com.r1control.app.ui.components.DiscOverCover
 import com.r1control.app.ui.components.IconTap
@@ -67,6 +69,8 @@ fun HaMediaCard(tile: HaTile.Media, entity: HaEntity?, actions: HaTileActions, b
 
     val duration = entity.mediaDurationS
     val playing = entity.isMediaPlaying
+    // Reseeds whenever Home Assistant reports a new volume; the drag writes it locally until released.
+    var shownVolume by remember(entity.mediaVolume) { mutableStateOf(entity.mediaVolume) }
     var dragging by remember { mutableStateOf(false) }
     // Reseeds whenever Home Assistant reports a new position or the player's state changes.
     var shown by remember(entity.mediaPositionS, entity.state) { mutableStateOf(entity.mediaPositionS) }
@@ -97,6 +101,9 @@ fun HaMediaCard(tile: HaTile.Media, entity: HaEntity?, actions: HaTileActions, b
             onSeek = { dragging = true; shown = it.coerceIn(0, duration) },
             onSeekDone = { actions.onMediaSeek(tile, shown); dragging = false },
             onNext = { actions.onMediaNext(tile) },
+            volume = if (entity.supportsMediaVolume) shownVolume else -1f,
+            onVolume = { shownVolume = it },
+            onVolumeDone = { actions.onMediaVolume(tile, shownVolume) },
             topEnd = {
                 if (entity.supportsMediaStop) {
                     Box(Modifier.clip(CircleShape).background(DiscOverCover)) {
@@ -154,7 +161,8 @@ private val previewPlaying = HaEntity(
         "media_artist" to HaAttribute.Text("Như Quỳnh, Thế Sơn"),
         "media_position" to HaAttribute.Number(33.0),
         "media_duration" to HaAttribute.Number(303.0),
-        "supported_features" to HaAttribute.Number(4130.0),
+        "volume_level" to HaAttribute.Number(0.4),
+        "supported_features" to HaAttribute.Number(4134.0),
     ),
 )
 

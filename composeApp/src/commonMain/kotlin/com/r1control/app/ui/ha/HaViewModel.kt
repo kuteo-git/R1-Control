@@ -48,6 +48,7 @@ import com.r1control.app.domain.model.ha.nextCall
 import com.r1control.app.domain.model.ha.playPauseCall
 import com.r1control.app.domain.model.ha.seekCall
 import com.r1control.app.domain.model.ha.stopCall
+import com.r1control.app.domain.model.ha.volumeCall
 import com.r1control.app.domain.model.ha.sortedForList
 import com.r1control.app.domain.model.ha.tapCall
 import com.r1control.app.domain.repository.HaException
@@ -329,6 +330,8 @@ class HaViewModel(
     fun onMediaStop(tile: HaTile.Media) = send(tile.stopCall())
 
     fun onMediaSeek(tile: HaTile.Media, positionS: Int) = send(tile.seekCall(positionS))
+
+    fun onMediaVolume(tile: HaTile.Media, level: Float) = send(tile.volumeCall(level))
 
     /** Home Assistant's rendering of a template tile's text, live while collected. Never collected in the edit mode: the list there shows no rendered text. */
     fun renderedTemplate(template: String): Flow<String> = ha.renderedTemplate(template)

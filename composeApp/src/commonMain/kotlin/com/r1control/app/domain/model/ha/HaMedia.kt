@@ -8,6 +8,7 @@ import kotlin.math.roundToInt
  * durations are whole seconds, as Home Assistant reports and `media_seek` takes.
  */
 
+private const val MEDIA_VOLUME_SET = 4
 private const val MEDIA_SEEK = 2
 private const val MEDIA_NEXT_TRACK = 32
 private const val MEDIA_STOP = 4096
@@ -39,6 +40,10 @@ val HaEntity.mediaDurationS: Int get() = (number("media_duration") ?: 0.0).round
 val HaEntity.supportsMediaNext: Boolean get() = (features() and MEDIA_NEXT_TRACK) != 0
 val HaEntity.supportsMediaSeek: Boolean get() = (features() and MEDIA_SEEK) != 0
 val HaEntity.supportsMediaStop: Boolean get() = (features() and MEDIA_STOP) != 0
+val HaEntity.supportsMediaVolume: Boolean get() = (features() and MEDIA_VOLUME_SET) != 0
+
+/** The player's volume, 0..1, as Home Assistant's `volume_level`; 0 when it reports none. */
+val HaEntity.mediaVolume: Float get() = (number("volume_level") ?: 0.0).toFloat().coerceIn(0f, 1f)
 
 // ---- service calls ----
 
@@ -52,6 +57,12 @@ fun HaTile.Media.seekCall(positionS: Int): HaServiceCall = HaServiceCall(
     "media_player",
     "media_seek",
     mapOf(HaServiceCall.ENTITY_ID to HaAttribute.Text(entity.value), "seek_position" to HaAttribute.Number(positionS.coerceAtLeast(0).toDouble())),
+)
+
+fun HaTile.Media.volumeCall(level: Float): HaServiceCall = HaServiceCall(
+    "media_player",
+    "volume_set",
+    mapOf(HaServiceCall.ENTITY_ID to HaAttribute.Text(entity.value), "volume_level" to HaAttribute.Number(level.coerceIn(0f, 1f).toDouble())),
 )
 
 // ---- cover url ----

@@ -136,6 +136,10 @@ fun PlayerCard(
     onSeekDone: () -> Unit,
     onNext: () -> Unit,
     topEnd: @Composable () -> Unit,
+    // A volume 0..1 shows a volume row above the seek bar; -1 hides it (the R1 sets its volume elsewhere).
+    volume: Float = -1f,
+    onVolume: (Float) -> Unit = {},
+    onVolumeDone: () -> Unit = {},
 ) {
     val strings = LocalStrings.current
     CardFrame(
@@ -188,28 +192,46 @@ fun PlayerCard(
                     )
                 }
             } else {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        val duration = view.durationS.coerceAtLeast(1)
-                        R1Slider(
-                            value = view.positionS.coerceIn(0, duration).toFloat(),
-                            onValueChange = { onSeek(it.toInt()) },
-                            valueRange = 0f..duration.toFloat(),
-                            onValueChangeFinished = onSeekDone,
-                            enabled = view.canSeek,
-                            active = Color.White,
-                            inactive = Color.White.copy(alpha = 0.3f),
-                            description = strings.seekPosition,
-                            valueText = strings.playbackPosition(formatClock(view.positionS), formatClock(view.durationS)),
-                        )
-                        Row(Modifier.fillMaxWidth().padding(horizontal = Space.Small)) {
-                            Text(formatClock(view.positionS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
-                            Spacer(Modifier.weight(1f))
-                            Text(formatClock(view.durationS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.Small)) {
+                    if (volume >= 0f) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            R1Icon(R1Icons.Volume, null, tint = Tokens.OnGround.copy(alpha = 0.8f), size = 20.dp)
+                            R1Slider(
+                                value = volume.coerceIn(0f, 1f),
+                                onValueChange = onVolume,
+                                valueRange = 0f..1f,
+                                onValueChangeFinished = onVolumeDone,
+                                modifier = Modifier.weight(1f).padding(start = Space.Small),
+                                active = Color.White,
+                                inactive = Color.White.copy(alpha = 0.3f),
+                                description = strings.volume,
+                                valueText = strings.volumePercent((volume.coerceIn(0f, 1f) * 100).toInt()),
+                            )
                         }
                     }
-                    if (view.canNext) {
-                        IconTap(R1Icons.Next, strings.next, onNext, tint = Tokens.OnGround)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            val duration = view.durationS.coerceAtLeast(1)
+                            R1Slider(
+                                value = view.positionS.coerceIn(0, duration).toFloat(),
+                                onValueChange = { onSeek(it.toInt()) },
+                                valueRange = 0f..duration.toFloat(),
+                                onValueChangeFinished = onSeekDone,
+                                enabled = view.canSeek,
+                                active = Color.White,
+                                inactive = Color.White.copy(alpha = 0.3f),
+                                description = strings.seekPosition,
+                                valueText = strings.playbackPosition(formatClock(view.positionS), formatClock(view.durationS)),
+                            )
+                            Row(Modifier.fillMaxWidth().padding(horizontal = Space.Small)) {
+                                Text(formatClock(view.positionS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
+                                Spacer(Modifier.weight(1f))
+                                Text(formatClock(view.durationS), style = MaterialTheme.typography.labelSmall, color = Tokens.OnGround.copy(alpha = 0.8f))
+                            }
+                        }
+                        if (view.canNext) {
+                            IconTap(R1Icons.Next, strings.next, onNext, tint = Tokens.OnGround)
+                        }
                     }
                 }
             }
