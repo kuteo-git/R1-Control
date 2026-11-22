@@ -29,7 +29,6 @@ import com.r1control.app.domain.model.ha.HaConnectionState
 import com.r1control.app.domain.model.ha.haBaseUrl
 import com.r1control.app.domain.model.ha.HaEntity
 import com.r1control.app.domain.model.ha.HaDashboard
-import com.r1control.app.domain.model.ha.HaCamera
 import com.r1control.app.domain.model.ha.HaEntityId
 import com.r1control.app.domain.model.ha.HaSection
 import com.r1control.app.domain.model.ha.HaServiceCall
@@ -37,7 +36,6 @@ import com.r1control.app.domain.model.ha.HaTabs
 import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.TileId
-import com.r1control.app.ui.camera.cameraItems
 import com.r1control.app.ui.components.LoadingBox
 import com.r1control.app.ui.components.TonalButton
 import com.r1control.app.ui.i18n.EnglishStrings
@@ -65,6 +63,7 @@ fun HaScreen(viewModel: HaViewModel, setup: HaSettingsViewModel) {
         HaTileActions(
             viewModel::onTile, viewModel::onCover, viewModel::onMedia, viewModel::onMediaNext, viewModel::onMediaStop,
             viewModel::onMediaSeek, viewModel::onMediaVolume, viewModel::openControls, viewModel::renderedTemplate,
+            viewModel::cameraStreamPath, viewModel::openCamera,
         )
     }
     val edit = remember(viewModel) {
@@ -79,8 +78,7 @@ fun HaScreen(viewModel: HaViewModel, setup: HaSettingsViewModel) {
             viewModel::setTabIcon, viewModel::deleteTab, viewModel::moveTab,
         )
     }
-    val cameras by viewModel.cameras.collectAsState()
-    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit, tabActions, cameras, viewModel::cameraStreamPath, viewModel::openCamera)
+    HaContent(state, address, token, status, setup::onAddress, setup::onToken, setup::connect, actions, edit, tabActions)
     val target by viewModel.controlTarget.collectAsState()
     val controls = remember(viewModel) {
         HaControlActions(
@@ -106,15 +104,12 @@ fun HaContent(
     actions: HaTileActions,
     edit: HaEditActions,
     tabs: HaTabActions = HaTabActions.None,
-    cameras: List<HaCamera> = emptyList(),
-    cameraPath: suspend (HaEntityId) -> String = { "" },
-    onOpenCamera: (HaCamera) -> Unit = {},
 ) {
     when (state) {
         HaState.Loading -> LoadingBox()
         HaState.NeedsSetup -> HaSetupContent(address, token, status, false, onAddress, onToken, onConnect)
         HaState.TokenRefused -> HaSetupContent(address, token, status, true, onAddress, onToken, onConnect)
-        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit, tabs, cameras, cameraPath, onOpenCamera)
+        is HaState.Live -> HaLive(state, haBaseUrl(address), actions, edit, tabs)
     }
 }
 
@@ -125,24 +120,18 @@ private fun HaLive(
     actions: HaTileActions,
     edit: HaEditActions,
     tabActions: HaTabActions,
-    cameras: List<HaCamera>,
-    cameraPath: suspend (HaEntityId) -> String,
-    onOpenCamera: (HaCamera) -> Unit,
 ) {
     val strings = LocalStrings.current
     val connected = state.connection == HaConnectionState.Connected
     val dashboard = state.dashboard
-    // The cameras are hidden while the layout is edited; the fullscreen one is drawn by the shell, over everything.
-    val showCameras = cameras.takeUnless { state.editing }.orEmpty()
     Column(Modifier.fillMaxSize()) {
         // More than one tab earns a bar to switch between them; the edit mode shows it even for one, to add or edit.
         state.tabs?.takeIf { state.editing || it.tabs.size > 1 }?.let { HaTabBar(it, state.editing, tabActions) }
         when {
             dashboard != null && state.editing -> HaEditList(dashboard, state.entities, edit)
-            dashboard != null && (dashboard.tileCount > 0 || showCameras.isNotEmpty()) -> {
+            dashboard != null && dashboard.tileCount > 0 -> {
                 val byId = remember(state.entities) { state.entities.associateBy { it.id } }
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Space.XLarge)) {
-                    cameraItems(showCameras, baseUrl, cameraPath, onOpenCamera)
                     dashboardItems(dashboard, byId, connected, baseUrl, actions)
                 }
             }
@@ -221,6 +210,7 @@ private val sampleEntities = listOf(
     sample("switch.fan", "off", "Fan"),
     sample("switch.hall", "on", "Hall light"),
     sample("cover.blind", "open", "Blind"),
+    sample("camera.front_door", "idle", "Front door"),
     sample("script.cool", "off", "Cool the bedroom"),
     HaEntity(
         HaEntityId("media_player.kitchen"),
@@ -242,6 +232,7 @@ private val sampleDashboard = HaDashboard(
                 HaTile.Toggle(tile(2), "", "mdi:lightbulb", HaEntityId("switch.hall")),
                 HaTile.Readout(tile(3), "Hall", "mdi:coolant-temperature", HaEntityId("sensor.hall_temperature")),
                 HaTile.Cover(tile(4), "", "", HaEntityId("cover.blind")),
+                HaTile.Camera(tile(7), "", "", HaEntityId("camera.front_door")),
             ),
         ),
         HaSection(
@@ -287,7 +278,7 @@ private val renderedSamples = mapOf(
     "{{ now().day }} / {{ now().month }}" to "16 / 11",
 )
 
-private val previewActions = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { template -> flowOf(renderedSamples[template].orEmpty()) })
+private val previewActions = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { template -> flowOf(renderedSamples[template].orEmpty()) }, { "" }, {})
 
 private fun live(
     connection: HaConnectionState,

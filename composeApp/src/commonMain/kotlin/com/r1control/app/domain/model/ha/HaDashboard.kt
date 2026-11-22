@@ -70,6 +70,9 @@ sealed interface HaTile {
     /** A media player: its state and title, and one control for play or pause. */
     data class Media(override val id: TileId, override val name: String, override val icon: String, override val entity: HaEntityId, override val condition: HaCondition = HaCondition.Always) : HaTile
 
+    /** A camera: a live stream card that opens full screen on a tap. It takes a whole row, like a player. */
+    data class Camera(override val id: TileId, override val name: String, override val icon: String, override val entity: HaEntityId, override val condition: HaCondition = HaCondition.Always) : HaTile
+
     /**
      * A card whose text is a Jinja [template], rendered live by Home Assistant (never here). A tap runs [call],
      * or does nothing when it is [HaServiceCall.None]. [entity] is [HaEntityId.None] when the card names none.
@@ -96,7 +99,7 @@ fun HaTile.tapCall(): HaServiceCall? = when (this) {
     is HaTile.Toggle -> HaServiceCall.on(entity, entity.domainName, "toggle")
     is HaTile.Action -> call
     is HaTile.Template -> call.takeUnless { it.isNone }
-    is HaTile.Readout, is HaTile.Cover, is HaTile.Media -> null
+    is HaTile.Readout, is HaTile.Cover, is HaTile.Media, is HaTile.Camera -> null
 }
 
 fun HaTile.Cover.call(command: HaCoverCommand): HaServiceCall = HaServiceCall.on(entity, "cover", command.service)
@@ -110,7 +113,7 @@ fun HaTile.isLitBy(entity: HaEntity?): Boolean {
         is HaTile.Toggle -> state == "on"
         is HaTile.Cover -> state == "open" || state == "opening" || state == "closing"
         is HaTile.Media -> state == "playing"
-        is HaTile.Action, is HaTile.Readout, is HaTile.Template -> false
+        is HaTile.Action, is HaTile.Readout, is HaTile.Template, is HaTile.Camera -> false
     }
 }
 

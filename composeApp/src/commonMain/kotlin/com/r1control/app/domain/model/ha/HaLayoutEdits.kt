@@ -66,6 +66,7 @@ fun HaTile.renamed(name: String): HaTile = when (this) {
     is HaTile.Cover -> copy(name = name)
     is HaTile.Media -> copy(name = name)
     is HaTile.Template -> copy(name = name)
+    is HaTile.Camera -> copy(name = name)
 }
 
 // ---- ids ----
@@ -96,6 +97,7 @@ fun defaultTile(id: TileId, entity: HaEntityId, name: String = "", icon: String 
     "scene" -> HaTile.Action(id, name, icon, entity, HaServiceCall.on(entity, "scene", "turn_on"))
     "cover" -> HaTile.Cover(id, name, icon, entity)
     "media_player" -> HaTile.Media(id, name, icon, entity)
+    "camera" -> HaTile.Camera(id, name, icon, entity)
     else -> HaTile.Readout(id, name, icon, entity)
 }
 

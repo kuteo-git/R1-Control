@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -70,24 +68,22 @@ private fun streamUrl(entity: HaEntityId, baseUrl: String, pathOf: suspend (HaEn
     return if (path.isEmpty()) "" else baseUrl + path
 }
 
-/** The household's cameras as cards at the top of the dashboard, each a live stream that opens full screen on a tap. */
-fun LazyListScope.cameraItems(
-    cameras: List<HaCamera>,
+/**
+ * One camera as a live stream card that opens full screen on a tap. A dashboard camera tile draws this; the
+ * caller owns the card's place in the layout, so it adds no margin of its own.
+ */
+@Composable
+fun CameraTile(
+    camera: HaCamera,
     baseUrl: String,
     pathOf: suspend (HaEntityId) -> String,
-    onOpen: (HaCamera) -> Unit,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    items(cameras, key = { "camera:${it.entity.value}" }) { camera ->
-        CameraCard(camera, streamUrl(camera.entity, baseUrl, pathOf), onOpen = { onOpen(camera) })
-    }
-}
-
-@Composable
-private fun CameraCard(camera: HaCamera, url: String, onOpen: () -> Unit) {
+    val url = streamUrl(camera.entity, baseUrl, pathOf)
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .padding(horizontal = Space.Gutter, vertical = Space.Lines)
             .aspectRatio(16f / 9f)
             .clip(RoundedCornerShape(Radius.Card))
             .background(Color.Black)

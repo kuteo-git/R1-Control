@@ -60,6 +60,7 @@ fun HaTile.withCondition(condition: HaCondition): HaTile = when (this) {
     is HaTile.Cover -> copy(condition = condition)
     is HaTile.Media -> copy(condition = condition)
     is HaTile.Template -> copy(condition = condition)
+    is HaTile.Camera -> copy(condition = condition)
 }
 
 /**

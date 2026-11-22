@@ -10,7 +10,6 @@ import com.r1control.app.domain.model.ha.HaTile
 import com.r1control.app.domain.model.ha.HaCamera
 import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaTabs
-import com.r1control.app.domain.model.ha.camerasFrom
 import com.r1control.app.domain.model.ha.SavedHaAddress
 import com.r1control.app.domain.model.ha.SectionId
 import com.r1control.app.domain.model.ha.TabId
@@ -200,10 +199,6 @@ class HaViewModel(
 
     /** Where a manual re-import from Home Assistant stands, for Home Assistant's settings to show. */
     val resync: StateFlow<HaResync> = resyncState.asStateFlow()
-
-    /** The household's cameras that can stream, kept up to date with the entities. */
-    val cameras: StateFlow<List<HaCamera>> =
-        ha.entities.map { camerasFrom(it) }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     private val expanded = MutableStateFlow<HaCamera?>(null)
 

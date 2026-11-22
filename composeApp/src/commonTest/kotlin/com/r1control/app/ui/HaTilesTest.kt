@@ -20,6 +20,7 @@ import kotlin.test.assertEquals
 private fun toggle(n: Int, entity: String = "switch.s$n", icon: String = "") = HaTile.Toggle(TileId("t$n"), "", icon, HaEntityId(entity))
 private fun cover(n: Int) = HaTile.Cover(TileId("t$n"), "", "", HaEntityId("cover.c$n"))
 private fun media(n: Int) = HaTile.Media(TileId("t$n"), "", "", HaEntityId("media_player.m$n"))
+private fun camera(n: Int) = HaTile.Camera(TileId("t$n"), "", "", HaEntityId("camera.c$n"))
 
 class HaTilesTest {
     private fun ids(rows: List<List<HaTile>>) = rows.map { row -> row.map { it.id.value } }
@@ -28,10 +29,10 @@ class HaTilesTest {
         assertEquals(listOf(listOf("t0", "t1"), listOf("t2", "t3"), listOf("t4")), ids(tileRowsOf((0..4).map(::toggle))))
     }
 
-    @Test fun aCoverAndAPlayerTakeAWholeRowAndEndThePairBeforeThem() {
+    @Test fun aCoverAPlayerAndACameraTakeAWholeRowAndEndThePairBeforeThem() {
         assertEquals(
-            listOf(listOf("t0"), listOf("t1"), listOf("t2", "t3"), listOf("t4"), listOf("t5")),
-            ids(tileRowsOf(listOf(toggle(0), cover(1), toggle(2), toggle(3), media(4), toggle(5)))),
+            listOf(listOf("t0"), listOf("t1"), listOf("t2", "t3"), listOf("t4"), listOf("t5"), listOf("t6")),
+            ids(tileRowsOf(listOf(toggle(0), cover(1), toggle(2), toggle(3), media(4), camera(5), toggle(6)))),
         )
     }
 

@@ -143,6 +143,7 @@ private fun HaTile.kind(): String = when (this) {
     is HaTile.Readout -> READOUT
     is HaTile.Cover -> COVER
     is HaTile.Media -> MEDIA
+    is HaTile.Camera -> CAMERA
     is HaTile.Template -> TEMPLATE
 }
 
@@ -166,6 +167,7 @@ private fun TileDto.toDomain(): HaTile {
         READOUT -> HaTile.Readout(tile, name, icon, about, shownWhen)
         COVER -> HaTile.Cover(tile, name, icon, about, shownWhen)
         MEDIA -> HaTile.Media(tile, name, icon, about, shownWhen)
+        CAMERA -> HaTile.Camera(tile, name, icon, about, shownWhen)
         TEMPLATE -> HaTile.Template(
             tile, name, icon, about, shownWhen,
             template = requireNotNull(template) { "a template without its text" },
@@ -190,6 +192,7 @@ private const val ACTION = "action"
 private const val READOUT = "readout"
 private const val COVER = "cover"
 private const val MEDIA = "media"
+private const val CAMERA = "camera"
 private const val TEMPLATE = "template"
 
 private const val STATE = "state"

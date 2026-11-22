@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.r1control.app.domain.model.ha.HaAttribute
+import com.r1control.app.domain.model.ha.HaCamera
 import com.r1control.app.domain.model.ha.HaCoverCommand
 import com.r1control.app.domain.model.ha.HaDashboard
 import com.r1control.app.domain.model.ha.HaEntity
@@ -40,6 +41,7 @@ import com.r1control.app.domain.model.ha.isUnavailableWith
 import com.r1control.app.domain.model.ha.tapAction
 import com.r1control.app.domain.model.ha.titleFor
 import com.r1control.app.domain.model.ha.visibleSections
+import com.r1control.app.ui.camera.CameraTile
 import com.r1control.app.ui.components.IconTap
 import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.SectionLabel
@@ -66,16 +68,20 @@ class HaTileActions(
     val openControls: (HaEntityId) -> Unit,
     /** Home Assistant's live rendering of a template; collected only while the tile is on screen. */
     val rendered: (template: String) -> Flow<String>,
+    /** The server path of a camera's live stream, or empty when it cannot stream; a camera tile asks for it. */
+    val cameraPath: suspend (HaEntityId) -> String,
+    /** A tap on a camera tile opens it full screen. */
+    val onOpenCamera: (HaCamera) -> Unit,
 ) {
     companion object {
-        val None = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { emptyFlow() })
+        val None = HaTileActions({}, { _, _ -> }, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, { emptyFlow() }, { "" }, {})
     }
 }
 
 /** Tiles per row on a phone. */
 private const val TILES_PER_ROW = 2
 
-private fun HaTile.takesWholeRow(): Boolean = this is HaTile.Cover || this is HaTile.Media
+private fun HaTile.takesWholeRow(): Boolean = this is HaTile.Cover || this is HaTile.Media || this is HaTile.Camera
 
 /** Tiles with controls of their own take a whole row; the rest sit two to a row, in order. */
 fun tileRowsOf(tiles: List<HaTile>): List<List<HaTile>> {
@@ -126,6 +132,7 @@ private fun defaultMdiFor(tile: HaTile, lit: Boolean): String = when (tile) {
     is HaTile.Readout -> "gauge"
     is HaTile.Cover -> "window-shutter"
     is HaTile.Media -> "speaker"
+    is HaTile.Camera -> "cctv"
     is HaTile.Template -> "tune"
 }
 
@@ -158,6 +165,11 @@ fun LazyListScope.dashboardItems(dashboard: HaDashboard, entities: Map<HaEntityI
 fun HaTileCard(tile: HaTile, entity: HaEntity?, connected: Boolean, baseUrl: String, actions: HaTileActions, modifier: Modifier = Modifier) {
     if (tile is HaTile.Media) {
         HaMediaCard(tile, entity, actions, baseUrl, modifier)
+        return
+    }
+    if (tile is HaTile.Camera) {
+        val camera = HaCamera(tile.entity, tile.titleFor(entity))
+        CameraTile(camera, baseUrl, actions.cameraPath, { actions.onOpenCamera(camera) }, modifier)
         return
     }
     val lit = tile.isLitBy(entity)

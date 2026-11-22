@@ -172,6 +172,7 @@ class HaDefaultTileTest {
         listOf("light.a", "switch.a", "fan.a", "input_boolean.a").forEach { assertIs<HaTile.Toggle>(kind(it), it) }
         assertIs<HaTile.Cover>(kind("cover.a"))
         assertIs<HaTile.Media>(kind("media_player.a"))
+        assertIs<HaTile.Camera>(kind("camera.a"))
         listOf("sensor.a", "select.a", "climate.a", "binary_sensor.a").forEach { assertIs<HaTile.Readout>(kind(it), it) }
     }
 
