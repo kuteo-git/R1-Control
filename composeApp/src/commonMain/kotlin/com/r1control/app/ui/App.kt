@@ -50,6 +50,7 @@ import com.r1control.app.AppContainer
 import com.r1control.app.domain.model.R1Address
 import com.r1control.app.ui.address.AddressViewModel
 import com.r1control.app.ui.address.FirstRunScreen
+import com.r1control.app.ui.camera.CameraFullscreen
 import com.r1control.app.ui.chat.ChatScreen
 import com.r1control.app.ui.components.Haptic
 import com.r1control.app.ui.components.IconTap
@@ -66,6 +67,7 @@ import com.r1control.app.ui.ha.HaSettingsViewModel
 import com.r1control.app.ui.i18n.LocalStrings
 import com.r1control.app.domain.model.LanguageChoice
 import com.r1control.app.domain.model.ha.HaConnectionState
+import com.r1control.app.domain.model.ha.haBaseUrl
 import com.r1control.app.domain.usecase.SpeakerView
 import com.r1control.app.ui.ha.HaState
 import com.r1control.app.ui.i18n.Strings
@@ -178,6 +180,8 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     val haAddress by models.ha.address.collectAsState()
     val speaker by models.feed.view.collectAsState()
     val languageChoice by models.app.language.collectAsState()
+    // A camera filling the screen is drawn over the whole shell, the tab bar and top bar included.
+    val expandedCamera by models.ha.expandedCamera.collectAsState()
 
     // The one back handler: Music pages use it too, and it returns to the page somebody was on.
     val back = { stack = stack.back() }
@@ -189,7 +193,8 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     // A mini player over a page, or over the Music and Chat tabs; the tab bar only ever sits under the tabs.
     val miniUnderPage = page != null && page.keepsMiniPlayer && shownMini != null
 
-    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
+      Column(Modifier.fillMaxSize()) {
         ScreenTopBar(
             title = page?.title(strings, lists.playlists) ?: when (tab) {
                 Tab.Ha -> strings.haTitle
@@ -292,6 +297,11 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                 )
             }
         }
+      }
+      // Over the whole shell, the bars included, so a camera fills the screen the way the watch layer does.
+      expandedCamera?.let {
+          CameraFullscreen(it, haBaseUrl(haAddress), models.ha::cameraStreamPath, models.ha::closeCamera)
+      }
     }
 }
 

@@ -204,6 +204,19 @@ class HaViewModel(
     val cameras: StateFlow<List<HaCamera>> =
         ha.entities.map { camerasFrom(it) }.distinctUntilChanged().stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    private val expanded = MutableStateFlow<HaCamera?>(null)
+
+    /** The camera filling the screen, or null. It is drawn over the whole app, so it lives above the tab. */
+    val expandedCamera: StateFlow<HaCamera?> = expanded.asStateFlow()
+
+    fun openCamera(camera: HaCamera) {
+        expanded.value = camera
+    }
+
+    fun closeCamera() {
+        expanded.value = null
+    }
+
     /** The server path of a live HLS stream of [entity], or empty when the link is down or it cannot stream. */
     suspend fun cameraStreamPath(entity: HaEntityId): String = try {
         ha.cameraStreamPath(entity)
