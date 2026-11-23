@@ -102,8 +102,8 @@ android {
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         // One number per release in five places: versionName, versionCode,
         // CFBundleShortVersionString, CFBundleVersion, APP_VERSION (VersionGuardTest).
-        versionCode = 7
-        versionName = "0.2.2"
+        versionCode = 8
+        versionName = "0.2.3"
     }
 
     signingConfigs {
