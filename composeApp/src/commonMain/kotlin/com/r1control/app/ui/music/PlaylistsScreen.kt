@@ -38,7 +38,6 @@ import com.r1control.app.domain.usecase.Created
 import com.r1control.app.domain.usecase.MusicStore
 import com.r1control.app.ui.Page
 import com.r1control.app.ui.components.Cover
-import com.r1control.app.ui.components.ConfirmDialog
 import com.r1control.app.ui.components.NameDialog
 import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.tappable
@@ -70,15 +69,13 @@ fun PlaylistsScreen(store: MusicStore, onOpen: (Page) -> Unit) {
                 Created.Refused -> Unit
             }
         },
-        onDelete = { store.delete(it.id) },
     )
 }
 
 @Composable
-fun PlaylistsContent(playlists: Playlists, onOpen: (PlaylistId) -> Unit, onCreate: (String) -> Unit, onDelete: (Playlist) -> Unit = {}) {
+fun PlaylistsContent(playlists: Playlists, onOpen: (PlaylistId) -> Unit, onCreate: (String) -> Unit) {
     val strings = LocalStrings.current
     var naming by remember { mutableStateOf(false) }
-    var deleting by remember { mutableStateOf<Playlist?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = Space.Gutter, vertical = Space.Small)) {
         when (playlists) {
             Playlists.Loading -> Unit
@@ -97,8 +94,6 @@ fun PlaylistsContent(playlists: Playlists, onOpen: (PlaylistId) -> Unit, onCreat
                         playlist.coverUrl, R1Icons.MusicNote,
                         if (playlist.hasName) playlist.name else strings.untitledPlaylist,
                         strings.songCount(playlist.songs.size),
-                        onLongClick = { deleting = playlist },
-                        onLongClickLabel = strings.deletePlaylist,
                     ) { onOpen(playlist.id) }
                 }
             }
@@ -112,26 +107,17 @@ fun PlaylistsContent(playlists: Playlists, onOpen: (PlaylistId) -> Unit, onCreat
             onCancel = { naming = false },
         )
     }
-    deleting?.let { playlist ->
-        ConfirmDialog(
-            text = strings.deletePlaylistQuestion(if (playlist.hasName) playlist.name else strings.untitledPlaylist),
-            confirmText = strings.delete,
-            cancelText = strings.cancel,
-            onConfirm = { onDelete(playlist); deleting = null },
-            onCancel = { deleting = null },
-        )
-    }
 }
 
 /** A row: a 56 dp picture (the first song's cover, or a glyph), a name and a count. [cover] null is the New playlist row. */
 @Composable
-private fun Line(cover: String?, glyph: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onLongClick: (() -> Unit)? = null, onLongClickLabel: String? = null, onClick: () -> Unit) {
+private fun Line(cover: String?, glyph: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 72.dp)
             .clip(RoundedCornerShape(Radius.Row))
-            .tappable(role = Role.Button, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel, onClick = onClick)
+            .tappable(role = Role.Button, onClick = onClick)
             .padding(vertical = Space.Small),
         verticalAlignment = Alignment.CenterVertically,
     ) {

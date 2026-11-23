@@ -26,10 +26,7 @@ import com.r1control.app.domain.model.SongList
 import com.r1control.app.domain.model.Track
 import com.r1control.app.domain.repository.SpeakerException
 import com.r1control.app.ui.Problem
-import com.r1control.app.ui.components.ConfirmDialog
 import com.r1control.app.ui.components.Cover
-import com.r1control.app.ui.components.IconTap
-import com.r1control.app.ui.components.NameDialog
 import com.r1control.app.ui.components.PrimaryButton
 import com.r1control.app.ui.components.ProblemBanner
 import com.r1control.app.ui.components.TonalButton
@@ -50,11 +47,6 @@ class PlaylistActions(
     val onShuffle: () -> Unit = {},
     val onMove: (Int, Int) -> Unit = { _, _ -> },
     val onRemove: (Track) -> Unit = {},
-    val onRenameAsked: () -> Unit = {},
-    val onRename: (String) -> Unit = {},
-    val onDeleteAsked: () -> Unit = {},
-    val onDelete: () -> Unit = {},
-    val onDialogDismissed: () -> Unit = {},
     /** An empty playlist's way in: the Music tab's search, its field focused. */
     val onFindSongs: () -> Unit = {},
 )
@@ -72,9 +64,6 @@ fun PlaylistScreen(viewModel: PlaylistViewModel, onGone: () -> Unit, onFindSongs
         PlaylistActions(
             onPlay = viewModel::onPlay, onShuffle = viewModel::onShuffle,
             onMove = viewModel::onMove, onRemove = viewModel::onRemove,
-            onRenameAsked = viewModel::onRenameAsked, onRename = viewModel::onRename,
-            onDeleteAsked = viewModel::onDeleteAsked, onDelete = viewModel::onDelete,
-            onDialogDismissed = viewModel::onDialogDismissed,
             onFindSongs = onFindSongs,
         ),
         onGone,
@@ -115,18 +104,6 @@ fun PlaylistContent(state: PlaylistPageState, mark: SongMark, actions: PlaylistA
                     )
                 }
             }
-            when (state.dialog) {
-                PlaylistDialog.None -> Unit
-                PlaylistDialog.Rename -> NameDialog(
-                    title = strings.renamePlaylist, initial = state.name, hint = strings.playlistName,
-                    confirmText = strings.save, cancelText = strings.cancel,
-                    onConfirm = actions.onRename, onCancel = actions.onDialogDismissed,
-                )
-                PlaylistDialog.ConfirmDelete -> ConfirmDialog(
-                    strings.deletePlaylistQuestion(title), strings.delete, strings.cancel,
-                    onConfirm = actions.onDelete, onCancel = actions.onDialogDismissed,
-                )
-            }
         }
     }
 }
@@ -149,15 +126,12 @@ private fun Header(title: String, state: PlaylistPageState.Showing, strings: Str
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(Space.Small), verticalAlignment = Alignment.CenterVertically) {
-            if (state.canPlay) {
-                // Shuffle is the prominent one, the filled pill; Play all is the quieter second.
+        if (state.canPlay) {
+            // Shuffle is the prominent one, the filled pill; Play all is the quieter second. Rename and delete live on the top bar.
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.Small), verticalAlignment = Alignment.CenterVertically) {
                 PrimaryButton(strings.shuffle, actions.onShuffle, icon = R1Icons.Shuffle)
                 TonalButton(strings.playAll, { actions.onPlay(0) }, icon = R1Icons.Play)
             }
-            Box(Modifier.weight(1f))
-            IconTap(R1Icons.Edit, strings.renamePlaylist, actions.onRenameAsked, tint = Tokens.OnGroundMuted)
-            IconTap(R1Icons.Delete, strings.deletePlaylist, actions.onDeleteAsked, tint = Tokens.OnGroundMuted)
         }
     }
 }
@@ -180,10 +154,9 @@ private val tracks = listOf(
 private fun showing(
     songs: List<Track> = tracks,
     playingHere: Boolean = false,
-    dialog: PlaylistDialog = PlaylistDialog.None,
     problem: Problem = Problem.None,
     name: String = "Nhạc xưa",
-) = PlaylistPageState.Showing(name, name.isNotEmpty(), SongList.of(songs), playingHere, dialog, problem)
+) = PlaylistPageState.Showing(name, name.isNotEmpty(), SongList.of(songs), playingHere, problem)
 
 @Preview
 @Composable
@@ -208,18 +181,6 @@ private fun PlaylistPlayingHerePreview() = PreviewHost(EnglishStrings) {
 private fun PlaylistFailedPreview() = PreviewHost(EnglishStrings) {
     val error = SpeakerException.Unreachable(RuntimeException("x"))
     PlaylistContent(showing(problem = Problem.Failed(error)), SongMark.Failed("b", error), PlaylistActions())
-}
-
-@Preview
-@Composable
-private fun PlaylistRenamePreview() = PreviewHost(EnglishStrings) {
-    PlaylistContent(showing(dialog = PlaylistDialog.Rename), SongMark.None, PlaylistActions())
-}
-
-@Preview
-@Composable
-private fun PlaylistDeletePreview() = PreviewHost(EnglishStrings) {
-    PlaylistContent(showing(dialog = PlaylistDialog.ConfirmDelete), SongMark.None, PlaylistActions())
 }
 
 @Preview

@@ -117,8 +117,7 @@ class Round3PlaylistsTest {
         runCurrent()
         val writes = tab.prefs.playlistWrites.size
         val page = page(tab, id)
-        page.onRenameAsked()
-        page.onRename("   ")
+        tab.store.rename(id, "   ")
         runCurrent()
         val shown = assertIs<PlaylistPageState.Showing>(page.state.value)
         assertEquals("Old", shown.name)
@@ -159,8 +158,7 @@ class Round3PlaylistsTest {
         tab.feed.refresh()
         runCurrent()
         assertTrue(assertIs<PlaylistPageState.Showing>(page.state.value).playingHere)
-        page.onDeleteAsked()
-        page.onDelete()
+        tab.store.delete(id)
         runCurrent()
         assertEquals(PlaylistPageState.Gone, page.state.value)
         tab.speaker.current = com.r1control.app.testing.speakerSnapshot(

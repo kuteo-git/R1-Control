@@ -47,14 +47,19 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope
 import com.r1control.app.AppContainer
+import com.r1control.app.domain.model.Playlist
+import com.r1control.app.domain.model.PlaylistId
+import com.r1control.app.domain.model.Playlists
 import com.r1control.app.domain.model.R1Address
 import com.r1control.app.ui.address.AddressViewModel
 import com.r1control.app.ui.address.FirstRunScreen
 import com.r1control.app.ui.camera.CameraFullscreen
 import com.r1control.app.ui.chat.ChatScreen
+import com.r1control.app.ui.components.ConfirmDialog
 import com.r1control.app.ui.components.Haptic
 import com.r1control.app.ui.components.IconTap
 import com.r1control.app.ui.components.LocalHaptics
+import com.r1control.app.ui.components.NameDialog
 import com.r1control.app.ui.components.closesKeyboardOnTap
 import com.r1control.app.ui.components.R1Icon
 import com.r1control.app.ui.components.ScreenTopBar
@@ -193,6 +198,14 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
     // A mini player over a page, or over the Music and Chat tabs; the tab bar only ever sits under the tabs.
     val miniUnderPage = page != null && page.keepsMiniPlayer && shownMini != null
 
+    // A playlist's page renames and deletes itself from the top bar, so the one visible way sits where its name is.
+    // The store outlives the page, so a delete here is seen by the page's own model, which then backs the page out.
+    val playlistOnTop = (page as? Page.PlaylistDetails)?.let { p ->
+        (lists.playlists as? Playlists.Readable)?.all?.firstOrNull { it.id == p.id }
+    }
+    var renaming by remember { mutableStateOf<Playlist?>(null) }
+    var deleting by remember { mutableStateOf<Playlist?>(null) }
+
     Box(Modifier.fillMaxSize()) {
       Column(Modifier.fillMaxSize()) {
         ScreenTopBar(
@@ -234,6 +247,10 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
                         IconTap(R1Icons.Gear, strings.settings, { open(Page.Settings(SettingsPage.Home)) }, iconSize = 26.dp)
                     }
                     Tab.Settings -> Unit
+                } else if (playlistOnTop != null) {
+                    // Rename and delete, the two acts a playlist's page owns, visible where its name is.
+                    IconTap(R1Icons.Edit, strings.renamePlaylist, { renaming = playlistOnTop })
+                    IconTap(R1Icons.Delete, strings.deletePlaylist, { deleting = playlistOnTop })
                 }
             },
         )
@@ -301,6 +318,24 @@ private fun Shell(container: AppContainer, models: AppModels, address: R1Address
       // Over the whole shell, the bars included, so a camera fills the screen the way the watch layer does.
       expandedCamera?.let {
           CameraFullscreen(it, haBaseUrl(haAddress), models.ha::cameraStreamPath, models.ha::closeCamera)
+      }
+      // The top bar's rename and delete, asked over the page. An empty rename is dropped by the store, keeping the name.
+      renaming?.let { playlist ->
+          NameDialog(
+              title = strings.renamePlaylist, initial = playlist.name, hint = strings.playlistName,
+              confirmText = strings.save, cancelText = strings.cancel,
+              onConfirm = { models.store.rename(playlist.id, it); renaming = null },
+              onCancel = { renaming = null },
+          )
+      }
+      deleting?.let { playlist ->
+          ConfirmDialog(
+              text = strings.deletePlaylistQuestion(if (playlist.hasName) playlist.name else strings.untitledPlaylist),
+              confirmText = strings.delete,
+              cancelText = strings.cancel,
+              onConfirm = { models.store.delete(playlist.id); deleting = null },
+              onCancel = { deleting = null },
+          )
       }
     }
 }

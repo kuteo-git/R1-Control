@@ -14,19 +14,11 @@ import com.r1control.app.ui.CommandProblem
 import com.r1control.app.ui.Problem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-/** What is asked over a playlist's page. */
-sealed interface PlaylistDialog {
-    data object None : PlaylistDialog
-    data object Rename : PlaylistDialog
-    data object ConfirmDelete : PlaylistDialog
-}
 
 sealed interface PlaylistPageState {
     /** The phone's first read of its playlists is still on its way: nothing is drawn, and the page does not back out. */
@@ -41,7 +33,6 @@ sealed interface PlaylistPageState {
         val songs: SongList,
         /** The speaker plays from this playlist now ([playsFrom]): the header says so. */
         val playingHere: Boolean,
-        val dialog: PlaylistDialog,
         /** A play or shuffle the speaker refused, or a reading that stopped coming (the policy of the mini player). */
         val problem: Problem,
     ) : PlaylistPageState {
@@ -63,9 +54,8 @@ class PlaylistViewModel(
 ) {
     private val ref = ListRef.Saved(id)
     private val commandProblem = CommandProblem(feed, scope)
-    private val dialog = MutableStateFlow<PlaylistDialog>(PlaylistDialog.None)
 
-    val state: StateFlow<PlaylistPageState> = combine(store.state, dialog, commandProblem.flow, feed.view) { lists, dialog, command, view ->
+    val state: StateFlow<PlaylistPageState> = combine(store.state, commandProblem.flow, feed.view) { lists, command, view ->
         val page: PlaylistPageState = when (val found = lists.playlist(id)) {
             PlaylistLookup.Loading -> PlaylistPageState.Loading
             PlaylistLookup.Gone -> PlaylistPageState.Gone
@@ -78,7 +68,6 @@ class PlaylistViewModel(
                     is SpeakerView.Stale -> playsFrom(lists.playing, ref, view.snapshot.media)
                     SpeakerView.Connecting, is SpeakerView.Offline -> false
                 },
-                dialog = dialog,
                 problem = if (view is SpeakerView.Stale) Problem.Failed(view.error) else command,
             )
         }
@@ -107,27 +96,4 @@ class PlaylistViewModel(
 
     fun onMove(from: Int, to: Int) = store.edit(ref, ListEdit.Move(from, to))
     fun onRemove(track: Track) = store.edit(ref, ListEdit.Remove(track.id))
-
-    fun onRenameAsked() {
-        dialog.value = PlaylistDialog.Rename
-    }
-
-    fun onRename(name: String) {
-        store.rename(id, name)
-        dialog.value = PlaylistDialog.None
-    }
-
-    fun onDeleteAsked() {
-        dialog.value = PlaylistDialog.ConfirmDelete
-    }
-
-    /** The store lets go of the pointer if this was playing; the state becomes Gone and the page backs out. */
-    fun onDelete() {
-        dialog.value = PlaylistDialog.None
-        store.delete(id)
-    }
-
-    fun onDialogDismissed() {
-        dialog.value = PlaylistDialog.None
-    }
 }
