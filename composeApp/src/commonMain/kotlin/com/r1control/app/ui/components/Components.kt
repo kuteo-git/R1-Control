@@ -3,9 +3,11 @@ package com.r1control.app.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +58,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -721,6 +725,14 @@ fun VerticalLevelSlider(
     }
 }
 
+/** The volume pill's drag, held across the gesture off the snapshot system so a per-frame delta is not a recomposition. */
+private class VolumeDragState {
+    var start = 0
+    var travelled = 0f
+    var felt = 0
+    var widthPx = 0f
+}
+
 /**
  * The volume bar, the R1 speaker's and a media_player's alike: a full-width pill whose fill is the level,
  * dragged horizontally. Where the finger lands sets nothing, the travel does, so an accidental touch never
@@ -734,12 +746,27 @@ fun VolumePill(pct: Int, steps: Int, enabled: Boolean, onDrag: (Int) -> Unit, on
     val level by rememberUpdatedState(pct)
     val notches by rememberUpdatedState(volumeNotches(steps))
     val haptics = LocalHaptics.current
+    val reportDrag by rememberUpdatedState(onDrag)
+    val reportDone by rememberUpdatedState(onDone)
+    // draggable, not detectHorizontalDragGestures: inside a LazyColumn (the Home Assistant dashboard) on iOS the
+    // raw detector loses the horizontal drag to the list's own scroll and the fill never moves, while draggable
+    // claims the horizontal axis the way the seek Slider does, which is why that one works in the same list.
+    val g = remember { VolumeDragState() }
+    val drag = rememberDraggableState { delta ->
+        g.travelled += delta
+        val p = fillAfterDrag(g.start, g.travelled, g.widthPx)
+        val notch = notchOf(p.toFloat(), 0f..100f, notches)
+        notchFeel(g.felt, notch, notches)?.let(haptics::play)
+        g.felt = notch
+        reportDrag(p)
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(72.dp)
             .clip(CircleShape)
             .background(Tokens.Card)
+            .onSizeChanged { g.widthPx = it.width.toFloat() }
             .clearAndSetSemantics {
                 contentDescription = strings.volume
                 if (enabled) {
@@ -754,30 +781,17 @@ fun VolumePill(pct: Int, steps: Int, enabled: Boolean, onDrag: (Int) -> Unit, on
                     disabled()
                 }
             }
-            .pointerInput(enabled) {
-                if (!enabled) return@pointerInput
-                var start = 0
-                var travelled = 0f
-                var felt = 0
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        start = level
-                        travelled = 0f
-                        felt = notchOf(level.toFloat(), 0f..100f, notches)
-                    },
-                    onDragEnd = onDone,
-                    onDragCancel = onDone,
-                    onHorizontalDrag = { change, dx ->
-                        change.consume()
-                        travelled += dx
-                        val p = fillAfterDrag(start, travelled, size.width.toFloat())
-                        val notch = notchOf(p.toFloat(), 0f..100f, notches)
-                        notchFeel(felt, notch, notches)?.let(haptics::play)
-                        felt = notch
-                        onDrag(p)
-                    },
-                )
-            },
+            .draggable(
+                state = drag,
+                orientation = Orientation.Horizontal,
+                enabled = enabled,
+                onDragStarted = {
+                    g.start = level
+                    g.travelled = 0f
+                    g.felt = notchOf(level.toFloat(), 0f..100f, notches)
+                },
+                onDragStopped = { reportDone() },
+            ),
     ) {
         if (enabled) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(pct / 100f).background(Tokens.VolumeFill))

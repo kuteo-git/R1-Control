@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -117,6 +120,32 @@ class HapticsGestureTest {
             drag(widthPx * 0.3f, widthPx * 0.3f + widthPx * 0.8f, y)
             assertEquals(100, pct)
             assertEquals(List(8) { Haptic.Tick } + Haptic.Knock, felt, "40% is step 6 of 15: steps 7 to 14 tick, 15 knocks")
+        }
+    }
+
+    // The media_player volume sits in a LazyColumn (the HA dashboard), the R1's own in a verticalScroll
+    // Column. The bug report is the media one does not follow the finger, so the drag must survive both hosts.
+    @Test
+    fun theVolumeFollowsADragInsideALazyColumn() {
+        var pct by mutableStateOf(40)
+        Rig {
+            LazyColumn { item { VolumePill(pct, steps = 0, enabled = true, onDrag = { pct = it }, onDone = {}) } }
+        }.use {
+            drag(widthPx * 0.3f, widthPx * 0.9f, 36 * density)
+            assertTrue(pct > 70, "a rightward drag should raise the volume, was $pct")
+        }
+    }
+
+    @Test
+    fun theVolumeFollowsADragInsideAVerticalScrollColumn() {
+        var pct by mutableStateOf(40)
+        Rig {
+            Box(Modifier.verticalScroll(rememberScrollState())) {
+                VolumePill(pct, steps = 0, enabled = true, onDrag = { pct = it }, onDone = {})
+            }
+        }.use {
+            drag(widthPx * 0.3f, widthPx * 0.9f, 36 * density)
+            assertTrue(pct > 70, "a rightward drag should raise the volume, was $pct")
         }
     }
 
