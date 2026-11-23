@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import com.r1control.app.ui.components.ConfirmDialog
 import com.r1control.app.ui.components.tappable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -101,6 +102,8 @@ class MusicActions(
     val onPickerDismiss: () -> Unit = {},
     /** The shelf's New playlist card, with the name asked for. */
     val onNewPlaylist: (String) -> Unit = {},
+    /** A long press on a shelf playlist asked to delete it, confirmed first. */
+    val onDeletePlaylist: (PlaylistId) -> Unit = {},
     val onOpen: (Page) -> Unit = {},
     val onClear: () -> Unit = {},
     val onClearQuery: () -> Unit = {},
@@ -138,6 +141,7 @@ fun MusicScreen(viewModel: MusicViewModel, onOpen: (Page) -> Unit) {
                     Created.Refused -> Unit
                 }
             },
+            onDeletePlaylist = viewModel::onDeletePlaylist,
             onOpen = onOpen,
             onClear = viewModel::clearResults,
             onClearQuery = viewModel::clearQuery,
@@ -165,6 +169,7 @@ fun MusicContent(
     val list = rememberLazyListState()
     val drag = rememberListDrag(state.results.tracks)
     var naming by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf<Playlist?>(null) }
     val field = remember { FocusRequester() }
     LaunchedEffect(focusSearch) {
         if (!focusSearch) return@LaunchedEffect
@@ -214,7 +219,7 @@ fun MusicContent(
         }
         when (val phase = state.phase) {
             MusicPhase.Idle -> {
-                shelfItems(state.shelf, strings, actions.onOpen) { naming = true }
+                shelfItems(state.shelf, strings, actions.onOpen, onDelete = { deleting = it }) { naming = true }
                 idleItems(state.recents, nowMillis, strings, actions)
             }
             MusicPhase.Searching -> item(key = "searching") { LoadingBox(Modifier.padding(top = Space.XLarge)) }
@@ -230,6 +235,15 @@ fun MusicContent(
             onCancel = { naming = false },
         )
     }
+    deleting?.let { playlist ->
+        ConfirmDialog(
+            text = strings.deletePlaylistQuestion(if (playlist.hasName) playlist.name else strings.untitledPlaylist),
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = { actions.onDeletePlaylist(playlist.id); deleting = null },
+            onCancel = { deleting = null },
+        )
+    }
 }
 
 private val CardSize = 132.dp
@@ -240,7 +254,7 @@ private val CardSize = 132.dp
  * It always ends with a New playlist card, so a phone with none has one card
  * and a phone with some can start another without leaving the tab.
  */
-private fun LazyListScope.shelfItems(shelf: ShelfState, strings: Strings, onOpen: (Page) -> Unit, onNew: () -> Unit) {
+private fun LazyListScope.shelfItems(shelf: ShelfState, strings: Strings, onOpen: (Page) -> Unit, onDelete: (Playlist) -> Unit, onNew: () -> Unit) {
     when (shelf) {
         // A first frame without a shelf, then the shelf: a local read takes a millisecond, so no skeleton.
         ShelfState.Loading -> Unit
@@ -257,7 +271,11 @@ private fun LazyListScope.shelfItems(shelf: ShelfState, strings: Strings, onOpen
             item(key = "shelf") {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.Medium)) {
                     items(shelf.shelf.cards, key = { "playlist:" + it.id.value }) { playlist ->
-                        PlaylistCard(playlist, strings) { onOpen(Page.PlaylistDetails(playlist.id)) }
+                        PlaylistCard(
+                            playlist, strings,
+                            onLongClick = { onDelete(playlist) },
+                            onClick = { onOpen(Page.PlaylistDetails(playlist.id)) },
+                        )
                     }
                     item(key = "shelf-new") { NewPlaylistCard(strings.newPlaylist, onNew) }
                 }
@@ -274,12 +292,12 @@ private fun QuietLine(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PlaylistCard(playlist: Playlist, strings: Strings, onClick: () -> Unit) {
+private fun PlaylistCard(playlist: Playlist, strings: Strings, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
     Column(
         Modifier
             .width(CardSize)
             .clip(RoundedCornerShape(Radius.Row))
-            .tappable(role = Role.Button, onClick = onClick),
+            .tappable(role = Role.Button, onLongClick = onLongClick, onLongClickLabel = strings.deletePlaylist, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(Space.Hair),
     ) {
         Cover(playlist.coverUrl, CardSize, radius = Radius.Row)

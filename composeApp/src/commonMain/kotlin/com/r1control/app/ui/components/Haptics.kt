@@ -1,6 +1,8 @@
 package com.r1control.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -69,7 +71,9 @@ fun fillAfterDrag(startPct: Int, travelPx: Float, spanPx: Float): Int {
 /**
  * `clickable` that is felt. Every press in `ui` goes through here
  * (`HapticGuardTest`); [selected] non-null makes it `selectable`, for a radio row.
+ * [onLongClick] adds a long press (felt as a [Haptic.Lift]), the shelf's way to delete a playlist.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Modifier.tappable(
     enabled: Boolean = true,
@@ -77,6 +81,8 @@ fun Modifier.tappable(
     onClickLabel: String? = null,
     selected: Boolean? = null,
     feel: Haptic = Haptic.Tap,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     onClick: () -> Unit,
 ): Modifier {
     val haptics = LocalHaptics.current
@@ -84,9 +90,13 @@ fun Modifier.tappable(
         haptics.play(feel)
         onClick()
     }
-    return if (selected != null) {
-        selectable(selected = selected, enabled = enabled, role = role, onClick = felt)
-    } else {
-        clickable(enabled = enabled, role = role, onClickLabel = onClickLabel, onClick = felt)
+    val feltLong = onLongClick?.let { held -> { haptics.play(Haptic.Lift); held() } }
+    return when {
+        selected != null -> selectable(selected = selected, enabled = enabled, role = role, onClick = felt)
+        feltLong != null -> combinedClickable(
+            enabled = enabled, role = role, onClickLabel = onClickLabel,
+            onLongClickLabel = onLongClickLabel, onLongClick = feltLong, onClick = felt,
+        )
+        else -> clickable(enabled = enabled, role = role, onClickLabel = onClickLabel, onClick = felt)
     }
 }

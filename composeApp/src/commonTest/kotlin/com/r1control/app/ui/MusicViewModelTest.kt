@@ -4,6 +4,7 @@ import com.r1control.app.domain.model.PlayRequest
 import com.r1control.app.domain.model.RecentSearch
 import com.r1control.app.testing.musicStore
 import com.r1control.app.domain.model.SavedAddress
+import com.r1control.app.domain.usecase.Created
 import com.r1control.app.domain.usecase.SearchMusic
 import com.r1control.app.domain.usecase.SpeakerFeed
 import com.r1control.app.testing.FakeSpeaker
@@ -14,6 +15,7 @@ import com.r1control.app.domain.model.MediaStatus
 import com.r1control.app.testing.media
 import com.r1control.app.testing.speakerSnapshot
 import com.r1control.app.ui.music.MusicPhase
+import com.r1control.app.ui.music.ShelfState
 import com.r1control.app.ui.music.SongMark
 import com.r1control.app.ui.music.isOnSpeaker
 import com.r1control.app.ui.music.songMarkOf
@@ -51,6 +53,18 @@ class MusicViewModelTest {
             "b" -> listOf(track("b1"))
             else -> emptyList()
         }
+    }
+
+    @Test fun deletingAPlaylistTakesItOffTheShelf() = runTest {
+        val vm = music(FakeSpeaker())
+        runCurrent()
+        val id = (vm.onNewPlaylist("Old songs") as Created.Made).id
+        runCurrent()
+        fun onShelf() = (vm.state.value.shelf as? ShelfState.Ready)?.shelf?.cards?.any { it.id == id } ?: false
+        assertTrue(onShelf(), "the new playlist is on the shelf")
+        vm.onDeletePlaylist(id)
+        runCurrent()
+        assertTrue(!onShelf(), "the deleted playlist is gone from the shelf")
     }
 
     @Test fun clearingTheQueryEmptiesTheFieldAndKeepsTheResults() = runTest {

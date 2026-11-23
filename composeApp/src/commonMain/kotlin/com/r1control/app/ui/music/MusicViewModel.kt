@@ -273,6 +273,9 @@ class MusicViewModel(
     /** The shelf's "New playlist": an empty playlist named [name]; what was made is handed back so its page can open. */
     fun onNewPlaylist(name: String): Created = store.create(name, emptyList())
 
+    /** Deletes a playlist from the shelf, the same store call the playlist page's own delete makes. */
+    fun onDeletePlaylist(id: PlaylistId) = store.delete(id)
+
     fun askForSearch() {
         focusAsked.value = true
     }
